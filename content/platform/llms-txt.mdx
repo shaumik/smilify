@@ -1,0 +1,30 @@
+---
+title: llms.txt
+description: An LLM-friendly index of the documentation
+icon: sparkles
+---
+
+Like Mintlify, the platform serves an auto-generated
+[`/llms.txt`](/llms.txt) — a plain-text map of every page with titles and
+descriptions, following the [llms.txt convention](https://llmstxt.org).
+
+```text title="GET /llms.txt (excerpt)"
+# Smilify
+
+> Smilify internal documentation
+
+## Documentation
+
+- [Introduction](/introduction): Welcome to the Smilify internal documentation platform
+- [Quickstart](/quickstart): Run the docs platform locally and publish your first page
+```
+
+## Why it matters internally
+
+Point internal AI assistants and RAG pipelines at `llms.txt` to give them a
+reliable index of what documentation exists — without scraping HTML.
+
+<Note>
+  `llms.txt` requires an authenticated session like every other route, and it
+  respects roles: a member token yields an index without admin-only pages.
+</Note>

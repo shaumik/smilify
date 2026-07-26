@@ -1,0 +1,35 @@
+---
+title: Images & embeds
+description: Frames, images, and rich media in your docs
+icon: palette
+---
+
+## Images
+
+Standard markdown images work and are styled with rounded borders
+automatically. Put static assets in `public/` and reference them absolutely:
+
+```mdx
+![The Smilify logo](/logo.svg)
+```
+
+![The Smilify logo](/logo.svg)
+
+## Frames
+
+Wrap anything in a `<Frame>` to center it on a subtle canvas with an optional
+caption:
+
+<Frame caption="The Smilify logo, framed">
+  <img src="/logo.svg" alt="Smilify" width="96" height="96" />
+</Frame>
+
+## Tooltips
+
+Use `<Tooltip>` for inline definitions — hover the underlined
+term: <Tooltip tip="Multipurpose eXtension of markdown with JSX components">MDX</Tooltip>.
+
+<Note>
+  Videos and iframes can be embedded with plain HTML tags inside MDX when
+  needed — the platform doesn't restrict standard elements.
+</Note>

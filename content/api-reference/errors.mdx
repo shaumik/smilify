@@ -1,0 +1,40 @@
+---
+title: Errors
+description: Error shapes and status codes used by the Smilify API
+icon: warning
+---
+
+The API uses conventional HTTP status codes and a consistent error envelope:
+
+```json title="Error envelope"
+{
+  "error": {
+    "type": "invalid_request_error",
+    "message": "`message` is required."
+  }
+}
+```
+
+## Status codes
+
+| Code | Type | Meaning |
+| --- | --- | --- |
+| 200 / 201 | — | Success |
+| 400 | `invalid_request_error` | Malformed JSON or missing required fields |
+| 401 | `authentication_error` | Missing or invalid API key |
+| 404 | `not_found` | The resource doesn't exist |
+
+## Trying error cases
+
+<Steps>
+  <Step title="Trigger a 401">
+    Open any endpoint's playground, clear the API key, and send.
+  </Step>
+  <Step title="Trigger a 404">
+    Call [Get a smile](/api-reference/smiles/get) with id `smile_999`.
+  </Step>
+  <Step title="Trigger a 400">
+    Call [Create a smile](/api-reference/smiles/create) with an empty JSON
+    body `{}`.
+  </Step>
+</Steps>

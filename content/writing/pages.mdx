@@ -1,0 +1,47 @@
+---
+title: Pages & frontmatter
+description: The anatomy of an MDX documentation page
+icon: file
+---
+
+Every page is an MDX file in `content/`. The file path becomes the URL:
+`content/writing/pages.mdx` → `/writing/pages`.
+
+## Frontmatter
+
+Pages start with YAML frontmatter:
+
+```yaml title="Frontmatter fields"
+---
+title: Pages & frontmatter        # H1 + browser title
+description: Shown under the title and in search results
+icon: file                        # Optional sidebar icon
+openapi: GET /smiles              # Only for API reference pages
+---
+```
+
+## Markdown support
+
+All GitHub-flavored markdown works: **bold**, _italic_, `inline code`,
+~~strikethrough~~, [links](/introduction), lists, blockquotes, and tables:
+
+| Element | Syntax |
+| --- | --- |
+| Heading | `## Heading` |
+| Table | GFM pipes |
+| Task list | `- [x] done` |
+
+> Blockquotes render like this.
+
+- [x] Write the page
+- [ ] Add it to `docs.json`
+
+## Headings and anchors
+
+`##` and `###` headings automatically get URL anchors and appear in the
+right-hand **On this page** panel. Hover any heading to grab a deep link.
+
+<Tip>
+  Keep one idea per page and lean on `description` — it doubles as the search
+  snippet and the SEO description.
+</Tip>

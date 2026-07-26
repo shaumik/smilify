@@ -1,0 +1,36 @@
+---
+title: Search
+description: Full-text search across every page you can access
+icon: search
+---
+
+Press <kbd>⌘K</kbd> (or <kbd>Ctrl+K</kbd>) anywhere, or click the search bar.
+
+## How it works
+
+- The server builds a **MiniSearch** index over every page's title,
+  description, group, and full plain-text content.
+- Queries are fuzzy (typo-tolerant) and prefix-matched as you type.
+- Titles are boosted over body text, so exact page-name matches surface first.
+- Results include the tab › group breadcrumb and a highlighted snippet.
+
+## Access-aware results
+
+Search is authenticated and **role-filtered at query time**: a member never
+receives results from admin-only groups, because filtering happens
+server-side before the response is sent — not in the browser.
+
+<Info>
+  Try it: search for "deployment" as an admin, then as
+  `docs@smilify.dev`. The admin-only page appears in the first session and is
+  absent in the second.
+</Info>
+
+## Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| ⌘K / Ctrl+K | Open or close search |
+| ↑ / ↓ | Move selection |
+| Enter | Open the selected page |
+| Esc | Close |

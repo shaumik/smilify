@@ -1,0 +1,40 @@
+---
+title: Cards
+description: Link tiles and grid layouts for visual navigation
+icon: sparkles
+---
+
+## Card
+
+A `Card` has a title, an optional icon, an optional link, and body content:
+
+```mdx
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Get the platform running locally in five minutes.
+</Card>
+```
+
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Get the platform running locally in five minutes.
+</Card>
+
+## Card groups
+
+Arrange cards in a responsive grid with `CardGroup`:
+
+<CardGroup cols={3}>
+  <Card title="Search" icon="search" href="/platform/search">
+    ⌘K fuzzy full-text search.
+  </Card>
+  <Card title="Theming" icon="palette" href="/platform/theming">
+    Brand colors and dark mode.
+  </Card>
+  <Card title="API playground" icon="terminal" href="/api-reference/introduction">
+    Try real requests in the browser.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Cards without `href` render as static tiles — useful for feature matrices
+  and comparison layouts.
+</Tip>

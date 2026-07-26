@@ -1,0 +1,47 @@
+---
+title: User management
+description: Managing accounts and roles in the demo credential store
+icon: users
+---
+
+The demo directory lives in `lib/auth.ts`. Each record is an email, display
+name, role, and scrypt password hash.
+
+## Adding a user
+
+<Steps>
+  <Step title="Hash the password">
+    ```bash
+    node -e "
+    const c = require('crypto');
+    const salt = c.randomBytes(16).toString('hex');
+    console.log(salt, c.scryptSync(process.argv[1], salt, 64).toString('hex'));
+    " 'their-password'
+    ```
+  </Step>
+  <Step title="Add the record">
+    ```ts title="lib/auth.ts"
+    {
+      email: 'new.user@echelonai.com',
+      name: 'New User',
+      role: 'member',   // or 'admin'
+      salt: '<salt>',
+      hash: '<hash>',
+    }
+    ```
+  </Step>
+  <Step title="Deploy">
+    Sessions are stateless JWTs, so no migration is needed — the user can sign
+    in as soon as the deploy lands.
+  </Step>
+</Steps>
+
+## Changing roles
+
+Edit the `role` field and redeploy. Existing sessions keep their old role
+until they expire or the user signs in again.
+
+<Warning>
+  The static store is for the pilot only. The SSO integration tracked in
+  PLAT-142 replaces this file entirely.
+</Warning>

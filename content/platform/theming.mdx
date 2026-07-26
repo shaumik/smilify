@@ -1,0 +1,40 @@
+---
+title: Theming
+description: Brand colors, dark mode, and customization
+icon: palette
+---
+
+## Brand colors
+
+Set your palette once in `docs.json`; it flows into links, active nav states,
+buttons, callouts, and cards via CSS variables:
+
+```json title="docs.json"
+{
+  "colors": {
+    "primary": "#16a34a",
+    "light": "#4ade80",
+    "dark": "#15803d"
+  }
+}
+```
+
+## Dark mode
+
+The moon/sun toggle in the top bar switches themes. The choice is persisted
+in `localStorage` and applied **before first paint**, so there's no flash of
+the wrong theme. First-time visitors get their OS preference.
+
+Code blocks ship both GitHub Light and GitHub Dark token colors and switch
+instantly with the theme.
+
+## Logo & name
+
+- Drop your logo at `public/logo.svg` — it appears in the top bar, the login
+  screen, and the favicon.
+- The product name in `docs.json` drives the top bar and page titles.
+
+<Tip>
+  Everything else is plain CSS in `app/globals.css` — no utility framework,
+  no build-time theme pipeline. Change a variable, refresh, done.
+</Tip>

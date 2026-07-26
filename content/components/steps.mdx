@@ -1,0 +1,34 @@
+---
+title: Steps
+description: Numbered sequences for procedures and setup guides
+icon: check
+---
+
+Use `<Steps>` and `<Step>` for anything procedural:
+
+```mdx
+<Steps>
+  <Step title="First step">Do the thing.</Step>
+  <Step title="Second step">Do the next thing.</Step>
+</Steps>
+```
+
+## Rendered
+
+<Steps>
+  <Step title="Generate an API key">
+    Ask in **#platform** for a Smilify API key. Demo environments use
+    `sk_demo_smilify_2026`.
+  </Step>
+  <Step title="Make your first request">
+    ```bash
+    curl "https://docs.internal/api/demo/v1/smiles" \
+      -H "Authorization: Bearer sk_demo_smilify_2026"
+    ```
+  </Step>
+  <Step title="Verify the response">
+    You should see a JSON payload with a `data` array of smiles.
+
+    <Check>Steps can contain any other component, including callouts.</Check>
+  </Step>
+</Steps>

@@ -1,0 +1,58 @@
+---
+title: Navigation
+description: Structure the sidebar and tabs with docs.json
+icon: list
+---
+
+Navigation lives in a single `docs.json` at the repository root, using the
+same shape as Mintlify's schema — tabs contain groups, groups contain pages.
+
+```json title="docs.json (excerpt)"
+{
+  "name": "Smilify",
+  "colors": { "primary": "#16a34a" },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          { "group": "Getting Started", "pages": ["introduction", "quickstart"] }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          { "group": "Smiles", "pages": ["api-reference/smiles/list"] }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Tabs
+
+Tabs render in the top bar. The sidebar shows only the groups of the active
+tab — exactly how Mintlify separates *Documentation* from *API Reference*.
+
+## Groups
+
+Groups are the section headers in the sidebar. Two extra options:
+
+- `"access": "admin"` — the whole group is hidden from non-admins
+  (see [Access control](/platform/access-control)).
+- Page order in the array defines the **Previous / Next** footer sequence.
+
+## Navbar and footer
+
+```json
+{
+  "navbar": { "links": [{ "label": "Support", "href": "mailto:x@y.com" }] },
+  "footer": { "socials": { "github": "https://github.com/shaumik/smilify" } }
+}
+```
+
+<Note>
+  Because the schema mirrors Mintlify's, migrating an existing Mintlify site
+  is mostly `cp docs.json` and moving MDX files into `content/`.
+</Note>

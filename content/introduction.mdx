@@ -1,0 +1,64 @@
+---
+title: Introduction
+description: Welcome to the Smilify internal documentation platform
+icon: book
+---
+
+**Smilify Docs** is our self-hosted documentation platform — a fully internal
+replacement for Mintlify. Everything runs on our own infrastructure, behind our
+own authentication, with no third-party service in the loop.
+
+<Note>
+  This site is access-controlled. Every page, search query, and API playground
+  request requires a signed-in session. Sign-in state is carried in an
+  HTTP-only session cookie verified by middleware on every request.
+</Note>
+
+## What you get
+
+<CardGroup cols={2}>
+  <Card title="MDX authoring" icon="file" href="/writing/pages">
+    Write docs in MDX with frontmatter, GitHub-flavored markdown, and a full
+    component library.
+  </Card>
+  <Card title="API playground" icon="bolt" href="/api-reference/introduction">
+    OpenAPI-driven reference pages with generated code samples and an
+    interactive "Try it" panel.
+  </Card>
+  <Card title="Instant search" icon="search" href="/platform/search">
+    Full-text fuzzy search across every page with ⌘K, scoped to what your role
+    can see.
+  </Card>
+  <Card title="Access control" icon="shield" href="/platform/access-control">
+    Session auth on every route, plus role-based navigation for admin-only
+    content.
+  </Card>
+</CardGroup>
+
+## How it works
+
+The platform is a Next.js application:
+
+- **Content** lives in `content/**/*.mdx` — plain files, versioned in git.
+- **Navigation** is defined in `docs.json`, using the same schema shape as
+  Mintlify's `docs.json`, so existing Mintlify content migrates with almost no
+  changes.
+- **Auth** is enforced in `middleware.ts`: no session, no page.
+- **API reference** pages are generated from `openapi/openapi.json`.
+
+## Feature parity at a glance
+
+| Mintlify feature | Smilify Docs |
+| --- | --- |
+| MDX pages + frontmatter | ✅ `content/` directory |
+| `docs.json` navigation (tabs, groups) | ✅ Same schema shape |
+| Callouts, cards, steps, tabs, accordions | ✅ Built-in components |
+| Code blocks: highlighting, titles, line marks, copy | ✅ Shiki-powered |
+| ⌘K full-text search | ✅ Server-side index |
+| Dark / light mode | ✅ Persisted per user |
+| OpenAPI reference + playground | ✅ Live "Try it" panel |
+| `llms.txt` generation | ✅ [/llms.txt](/llms.txt) |
+| Feedback ("Was this helpful?") | ✅ Stored locally |
+| Authentication | ✅ First-class, on by default |
+
+Ready to dive in? Head to the [Quickstart](/quickstart).

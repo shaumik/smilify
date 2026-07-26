@@ -1,0 +1,46 @@
+---
+title: Param & response fields
+description: Document API parameters and response attributes by hand
+icon: terminal
+---
+
+API reference pages generate these automatically from the OpenAPI spec, but
+you can also use them manually anywhere.
+
+## ParamField
+
+```mdx
+<ParamField query="limit" type="integer" default="10">
+  Maximum number of results to return.
+</ParamField>
+```
+
+<ParamField query="limit" type="integer" default="10">
+  Maximum number of results to return.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The smile ID, e.g. `smile_001`.
+</ParamField>
+
+<ParamField body="message" type="string" required>
+  What made you smile — max 280 characters.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer key of the form `Bearer sk_demo_…`.
+</ParamField>
+
+## ResponseField
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the smile.
+</ResponseField>
+
+<ResponseField name="mood" type="enum">
+  One of `joyful`, `grateful`, `proud`, `calm`.
+
+  <Expandable title="Mood semantics">
+    Moods drive the team dashboard aggregation. When in doubt, `joyful`.
+  </Expandable>
+</ResponseField>

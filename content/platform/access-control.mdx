@@ -1,0 +1,52 @@
+---
+title: Access control
+description: Role-based visibility for navigation, pages, and search
+icon: shield
+---
+
+Beyond requiring sign-in everywhere, content can be restricted by **role**.
+
+## Restricting a group
+
+Mark any navigation group in `docs.json`:
+
+```json title="docs.json" {4}
+{
+  "group": "Admin",
+  "access": "admin",
+  "pages": ["admin/deployment", "admin/user-management"]
+}
+```
+
+Three enforcement layers kick in automatically:
+
+<Steps>
+  <Step title="Navigation">
+    The group never renders in the sidebar for non-admins.
+  </Step>
+  <Step title="Direct URLs">
+    A member requesting `/admin/deployment` gets a **404**, not a 403 — the
+    page's existence isn't disclosed.
+  </Step>
+  <Step title="Search">
+    Results are filtered server-side per role before leaving the server.
+  </Step>
+</Steps>
+
+## Seeing it live
+
+<Tabs>
+  <Tab title="As admin">
+    Sign in as `admin@smilify.dev`. The **Admin** group appears at the bottom
+    of the Documentation sidebar with a shield marker.
+  </Tab>
+  <Tab title="As member">
+    Sign in as `docs@smilify.dev`. No Admin group, no search hits for its
+    pages, and direct links 404.
+  </Tab>
+</Tabs>
+
+<Warning>
+  Role lives inside the signed session token, so it can't be tampered with
+  client-side. Changing a user's role takes effect on their next sign-in.
+</Warning>

@@ -1,0 +1,68 @@
+---
+title: Code blocks
+description: Syntax highlighting, titles, line highlighting, and code groups
+icon: code
+---
+
+Code blocks are highlighted with Shiki using GitHub themes that follow the
+site's light/dark mode. Every block gets a hover copy button.
+
+## Basic block
+
+```python
+def smile(times: int) -> str:
+    return "😄" * times
+
+print(smile(3))
+```
+
+## Titles
+
+Add a `title` to render a filename bar:
+
+```ts title="lib/smile.ts"
+export function smile(times: number): string {
+  return '😄'.repeat(times);
+}
+```
+
+## Line highlighting
+
+Highlight lines with `{n,n-m}` after the language:
+
+```js title="highlight.js" {2,4-5}
+const a = 'plain';
+const b = 'highlighted';
+const c = 'plain';
+const d = 'highlighted';
+const e = 'highlighted';
+```
+
+## Code groups
+
+Show the same operation in several languages with `<CodeGroup>` — the tab
+labels come from each block's `title`:
+
+<CodeGroup>
+
+```bash title="cURL"
+curl -X POST "https://docs.internal/api/demo/v1/smiles" \
+  -H "Authorization: Bearer $SMILIFY_API_KEY" \
+  -d '{"message": "Code groups work!"}'
+```
+
+```python title="Python"
+import requests
+
+requests.post(url, headers=headers, json={"message": "Code groups work!"})
+```
+
+```js title="JavaScript"
+await fetch(url, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({ message: 'Code groups work!' }),
+});
+```
+
+</CodeGroup>

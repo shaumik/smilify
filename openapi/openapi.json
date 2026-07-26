@@ -1,0 +1,299 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Smilify API",
+    "description": "Track and share smiles across your team.",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "/api/demo/v1" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/smiles": {
+      "get": {
+        "operationId": "listSmiles",
+        "summary": "List smiles",
+        "description": "Returns recent smiles, newest first.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of smiles to return (1–100).",
+            "schema": { "type": "integer", "default": 10 }
+          },
+          {
+            "name": "mood",
+            "in": "query",
+            "required": false,
+            "description": "Filter by mood.",
+            "schema": { "type": "string", "enum": ["joyful", "grateful", "proud", "calm"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of smiles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The smiles.",
+                      "items": { "$ref": "#/components/schemas/Smile" }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "Whether more results exist beyond `limit`.",
+                      "example": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "operationId": "createSmile",
+        "summary": "Create a smile",
+        "description": "Records a new smile for the team feed.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "What made you smile (max 280 chars).",
+                    "example": "We built our own docs platform!"
+                  },
+                  "emoji": {
+                    "type": "string",
+                    "description": "An emoji for the smile.",
+                    "example": "😄"
+                  },
+                  "mood": {
+                    "type": "string",
+                    "enum": ["joyful", "grateful", "proud", "calm"],
+                    "description": "The mood of the smile.",
+                    "example": "proud"
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "Who is smiling.",
+                    "example": "shaumik@echelonai.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created smile.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Smile" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/smiles/{id}": {
+      "get": {
+        "operationId": "getSmile",
+        "summary": "Get a smile",
+        "description": "Retrieves a single smile by its ID.",
+        "parameters": [{ "$ref": "#/components/parameters/SmileId" }],
+        "responses": {
+          "200": {
+            "description": "The smile.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Smile" } }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSmile",
+        "summary": "Delete a smile",
+        "description": "Permanently removes a smile.",
+        "parameters": [{ "$ref": "#/components/parameters/SmileId" }],
+        "responses": {
+          "200": {
+            "description": "Deletion confirmation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "example": "smile_001" },
+                    "deleted": { "type": "boolean", "example": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/sentiment": {
+      "post": {
+        "operationId": "analyzeSentiment",
+        "summary": "Analyze sentiment",
+        "description": "Scores a piece of text and tells you whether it is smile-worthy.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The text to analyze (max 500 chars).",
+                    "example": "I love how great this launch went, thanks team!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sentiment analysis result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "text": { "type": "string", "description": "The analyzed text." },
+                    "sentiment": {
+                      "type": "string",
+                      "enum": ["positive", "neutral", "negative"],
+                      "description": "Overall sentiment label.",
+                      "example": "positive"
+                    },
+                    "score": {
+                      "type": "number",
+                      "description": "Score from -1 (negative) to 1 (positive).",
+                      "example": 0.87
+                    },
+                    "smile_worthy": {
+                      "type": "boolean",
+                      "description": "Whether this text deserves a smile.",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer" }
+    },
+    "parameters": {
+      "SmileId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The smile ID, e.g. `smile_001`.",
+        "schema": { "type": "string", "example": "smile_001" }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request was invalid.",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid API key.",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "NotFound": {
+        "description": "The resource does not exist.",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      }
+    },
+    "schemas": {
+      "Smile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique smile identifier.",
+            "example": "smile_001"
+          },
+          "emoji": { "type": "string", "description": "The smile's emoji.", "example": "😄" },
+          "mood": {
+            "type": "string",
+            "enum": ["joyful", "grateful", "proud", "calm"],
+            "description": "The mood of the smile.",
+            "example": "joyful"
+          },
+          "message": {
+            "type": "string",
+            "description": "What made this person smile.",
+            "example": "Shipped the new docs platform!"
+          },
+          "author": {
+            "type": "string",
+            "description": "Who smiled.",
+            "example": "ada@echelonai.com"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the smile was recorded."
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Machine-readable error type.",
+                "example": "invalid_request_error"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable explanation.",
+                "example": "`message` is required."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

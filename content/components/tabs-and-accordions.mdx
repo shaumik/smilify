@@ -1,0 +1,64 @@
+---
+title: Tabs & accordions
+description: Progressive disclosure for dense content
+icon: list
+---
+
+## Tabs
+
+Switch between alternative content with `<Tabs>` and `<Tab>`:
+
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    brew install node
+    npm run dev
+    ```
+  </Tab>
+  <Tab title="Linux">
+    ```bash
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```powershell
+    winget install OpenJS.NodeJS.LTS
+    ```
+  </Tab>
+</Tabs>
+
+## Accordions
+
+Collapse detail behind a summary line:
+
+<Accordion title="Why do we self-host our docs?">
+  Internal docs contain architecture details, credentials procedures, and
+  API surfaces we don't want on third-party infrastructure. Self-hosting puts
+  the entire stack — content, search, and auth — inside our network boundary.
+</Accordion>
+
+<Accordion title="Can I open an accordion by default?" defaultOpen>
+  Yes — pass `defaultOpen` like this one does.
+</Accordion>
+
+## Accordion groups
+
+<AccordionGroup>
+  <Accordion title="Does search index accordion content?">
+    Yes. Search indexes the raw MDX text, so collapsed content is findable.
+  </Accordion>
+  <Accordion title="Are accordions keyboard accessible?">
+    They render as native `details`/`summary` elements, so Enter/Space toggle
+    them with no JavaScript.
+  </Accordion>
+</AccordionGroup>
+
+## Expandable
+
+For lighter-weight inline disclosure, e.g. in field docs:
+
+<Expandable title="Show child attributes">
+  <ResponseField name="id" type="string">The unique identifier.</ResponseField>
+  <ResponseField name="created_at" type="timestamp">Creation time.</ResponseField>
+</Expandable>

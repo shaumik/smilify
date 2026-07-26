@@ -1,0 +1,78 @@
+---
+title: Quickstart
+description: Run the docs platform locally and publish your first page
+icon: rocket
+---
+
+## Run the platform
+
+<Steps>
+  <Step title="Install dependencies">
+    Clone the repository and install packages:
+
+    ```bash
+    git clone https://github.com/shaumik/smilify.git
+    cd smilify
+    npm install
+    ```
+  </Step>
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+
+    The site is served at `http://localhost:3000`. You'll be redirected to the
+    sign-in page — use one of the demo accounts from the README.
+  </Step>
+  <Step title="Create a page">
+    Add a new MDX file under `content/`:
+
+    ```mdx title="content/guides/my-first-page.mdx"
+    ---
+    title: My first page
+    description: Hello from Smilify Docs
+    ---
+
+    ## It works
+
+    Regular **markdown**, plus components like:
+
+    <Tip>You just published an internal docs page.</Tip>
+    ```
+  </Step>
+  <Step title="Add it to the navigation">
+    Reference the page (path without extension) in `docs.json`:
+
+    ```json title="docs.json" {6}
+    {
+      "navigation": {
+        "tabs": [{
+          "tab": "Documentation",
+          "groups": [{
+            "group": "Guides",
+            "pages": ["guides/my-first-page"]
+          }]
+        }]
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+<Check>
+  That's the whole workflow: write MDX, list it in `docs.json`, commit. The
+  page is live for everyone with access on the next deploy.
+</Check>
+
+## Production build
+
+```bash
+npm run build
+npm start
+```
+
+<Warning>
+  Set a strong `SESSION_SECRET` environment variable in production — it signs
+  every session cookie. See [Deployment](/admin/deployment) (admin-only) for
+  the full checklist.
+</Warning>

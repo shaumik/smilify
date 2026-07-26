@@ -1,0 +1,105 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Smilify",
+  "description": "Smilify internal documentation",
+  "colors": {
+    "primary": "#16a34a",
+    "light": "#4ade80",
+    "dark": "#15803d"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["introduction", "quickstart", "authentication"]
+          },
+          {
+            "group": "Writing Docs",
+            "pages": [
+              "writing/pages",
+              "writing/navigation",
+              "writing/code-blocks",
+              "writing/images-and-embeds"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/callouts",
+              "components/cards",
+              "components/tabs-and-accordions",
+              "components/steps",
+              "components/fields"
+            ]
+          },
+          {
+            "group": "Platform",
+            "pages": [
+              "platform/search",
+              "platform/theming",
+              "platform/access-control",
+              "platform/llms-txt"
+            ]
+          },
+          {
+            "group": "Admin",
+            "access": "admin",
+            "pages": ["admin/deployment", "admin/user-management"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["api-reference/introduction", "api-reference/errors"]
+          },
+          {
+            "group": "Smiles",
+            "pages": [
+              "api-reference/smiles/list",
+              "api-reference/smiles/create",
+              "api-reference/smiles/get",
+              "api-reference/smiles/delete"
+            ]
+          },
+          {
+            "group": "Sentiment",
+            "pages": ["api-reference/sentiment/analyze"]
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "groups": [
+          {
+            "group": "Updates",
+            "pages": ["changelog/overview"]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      { "label": "Support", "href": "mailto:platform@echelonai.com" }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/shaumik/smilify",
+      "slack": "https://echelonai.slack.com"
+    }
+  },
+  "api": {
+    "openapi": "openapi/openapi.json",
+    "playground": { "display": "interactive" }
+  },
+  "feedback": {
+    "thumbsRating": true
+  }
+}

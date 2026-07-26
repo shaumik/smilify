@@ -1,0 +1,56 @@
+---
+title: API Reference
+description: The Smilify API — live, interactive, and generated from OpenAPI
+icon: terminal
+---
+
+The pages in this tab are **generated from `openapi/openapi.json`**. Each
+endpoint page includes parameter and response documentation, code samples in
+three languages, and an interactive **Try it** playground that hits a live
+demo API.
+
+## Base URL
+
+```text
+/api/demo/v1
+```
+
+The demo API runs inside this app so the playground works out of the box, but
+it authenticates like a real external service.
+
+## Authentication
+
+All endpoints require a bearer key:
+
+```bash
+curl "/api/demo/v1/smiles" \
+  -H "Authorization: Bearer sk_demo_smilify_2026"
+```
+
+<Tip>
+  The playground pre-fills the demo key `sk_demo_smilify_2026`. Clear it and
+  send a request to see the real `401` error shape.
+</Tip>
+
+## Adding endpoints
+
+An API page is just frontmatter — no body required:
+
+```mdx title="content/api-reference/smiles/list.mdx"
+---
+title: List smiles
+openapi: GET /smiles
+---
+```
+
+Update the OpenAPI spec, add a page with the `openapi` field, list it in
+`docs.json`, and the docs, samples, and playground are generated for you.
+
+<CardGroup cols={2}>
+  <Card title="List smiles" icon="smile" href="/api-reference/smiles/list">
+    Start with a GET request.
+  </Card>
+  <Card title="Analyze sentiment" icon="sparkles" href="/api-reference/sentiment/analyze">
+    A POST with a request body.
+  </Card>
+</CardGroup>
