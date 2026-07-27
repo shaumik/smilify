@@ -1,0 +1,94 @@
+---
+title: Mintlify parity matrix
+description: Feature-by-feature comparison against Mintlify, kept honest
+icon: list
+---
+
+Status of every Mintlify capability versus this platform.
+**✅ built** · **🟡 partial** · **❌ not built**
+
+## Authoring & content
+
+| Mintlify feature | Us | Notes |
+| --- | --- | --- |
+| MDX pages + frontmatter | ✅ | `content/**/*.mdx` |
+| `docs.json` config (tabs, groups, colors, navbar, footer) | ✅ | Same schema shape; migration is mostly copy-paste |
+| Nav anchors / dropdowns / multi-level nesting | 🟡 | Tabs + groups only |
+| Component library (callouts, cards, tabs, accordions, steps, fields, frames, updates, tooltips) | ✅ | See the Components section |
+| Code blocks: highlighting, titles, line highlighting, copy, code groups | ✅ | Shiki, dual light/dark themes |
+| Images, frames, embeds | ✅ | Plain HTML also works in MDX |
+| Reusable snippets | ❌ | Would be an MDX include mechanism |
+
+## Site experience
+
+| Mintlify feature | Us | Notes |
+| --- | --- | --- |
+| Branding via config, custom theming | ✅ | CSS variables from `docs.json` colors |
+| Dark / light mode | ✅ | No-flash, persisted |
+| ⌘K full-text search | ✅ | Fuzzy, typo-tolerant, role-filtered server-side |
+| TOC scroll-spy, breadcrumbs, prev/next | ✅ | |
+| Feedback ("Was this page helpful?") | ✅ | Stored locally; no dashboard yet |
+| Mobile responsive | ✅ | |
+| Custom domains, hosting, CDN | 🟡 | Self-hosted — deploy behind any internal domain; we run it ourselves |
+| SEO tooling | 🟡 | Meta titles/descriptions only — site is auth-walled by design |
+
+## API reference
+
+| Mintlify feature | Us | Notes |
+| --- | --- | --- |
+| OpenAPI-generated reference pages | ✅ | One frontmatter line per endpoint |
+| Interactive playground ("Try it") | ✅ | Live requests against `/api/v1` |
+| Generated code samples | 🟡 | cURL / Python / JavaScript; Mintlify covers more languages |
+| AsyncAPI (event-driven APIs) | ❌ | |
+
+## AI & agents
+
+| Mintlify feature | Us | Notes |
+| --- | --- | --- |
+| `llms.txt` | ✅ | Role-aware, auth-walled |
+| `llms-full.txt` (full content dump) | ❌ | Trivial to add |
+| Serve pages as raw Markdown to agents | ❌ | Easy to add (`.md` suffix routes) |
+| Auto-generated MCP server per docs site | ❌ | ~a day: search + fetch tools over the content |
+| Embedded AI assistant with citations | ❌ | Needs an LLM backend (internal Claude API) |
+| Docs agent that proposes updates ("self-updating") | ❌ | See below — infrastructure ready, automation not built |
+| AI traffic analytics | ❌ | |
+
+## Editing & workflow
+
+| Mintlify feature | Us | Notes |
+| --- | --- | --- |
+| Docs-as-code (git-native) | ✅ | The site *is* a repo; agents and humans edit the same files |
+| WYSIWYG web editor with git sync | ❌ | Largest gap for non-technical editors |
+| Preview deployments per PR | ❌ | Straightforward with our CI |
+| CI checks (broken links, lint) | ❌ | |
+
+## Enterprise
+
+| Mintlify feature | Us | Notes |
+| --- | --- | --- |
+| Authentication | ✅ | Stronger than Mintlify's default: *every* route is auth-walled, self-hosted, Descope SSO |
+| Partial authentication (public + private mix) | 🟡 | We do authenticated role-gating; no public/anonymous tier |
+| Personalization (per-user API keys, plan-based content) | 🟡 | Role-based content works; playground key is static |
+| Versioning | ❌ | |
+| Localization / continuous translations | ❌ | |
+| Analytics dashboard | ❌ | Feedback captured as JSONL only |
+
+## On "self-updating documentation"
+
+Mintlify's pitch is *"the knowledge platform built for agents"* — docs that
+agents can read, and an agent that keeps docs updated via pull requests.
+Where we honestly stand:
+
+- **Agents reading us**: partially true today — docs are plain MDX in git
+  plus a role-aware `llms.txt`. The full agent-readability layer
+  (`llms-full.txt`, raw Markdown serving, MCP) is not built yet.
+- **Self-updating**: true for the API reference only — it regenerates from
+  the OpenAPI spec on every request, so spec changes are live instantly.
+  Prose does not update itself; nothing watches the codebase and proposes
+  doc changes.
+
+<Note>
+  The credible path to parity here: since docs are git-native, a CI job can
+  run a coding agent (e.g. Claude Code) on merge to draft doc updates as
+  PRs — the same workflow that built this platform.
+</Note>
