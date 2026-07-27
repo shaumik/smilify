@@ -71,17 +71,13 @@ a:hover { text-decoration: underline; }
 .login-brand h1 { margin: 12px 0 4px; font-size: 22px; }
 .login-brand p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 
-.sso-btn {
-  display: block;
+.sso-flow { min-height: 40px; }
+.sso-loading {
   text-align: center;
-  padding: 10px;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
 }
-.sso-btn:hover { filter: brightness(1.08); text-decoration: none; }
 
 .login-divider {
   display: flex;

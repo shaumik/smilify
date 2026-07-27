@@ -1,26 +1,29 @@
-// Descope SSO via standard OIDC + PKCE.
+// Descope SSO.
 //
-// Descope acts purely as the identity source: after the OIDC handshake we
-// mint the same first-party session cookie the password flow uses, so
-// middleware, roles, and search filtering are identical for both paths.
+// The login page embeds Descope's Flow component (official @descope/react-sdk),
+// so the entire sign-in UX — MFA, passkeys, magic links, social login — is
+// configured in the Descope console with no code changes here.
+//
+// On successful sign-in the browser posts Descope's session JWT to
+// /api/auth/descope/token. This module validates it (signature via Descope's
+// JWKS, expiry, issuer) and maps it to a docs user; the route then mints the
+// same first-party session cookie the local password flow uses, so
+// middleware, role gating, and search filtering are identical for both.
 //
 // Enabled by setting DESCOPE_PROJECT_ID. See .env.example for all options.
-import { createHash, randomBytes } from 'crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { SessionUser } from './session';
 
 export interface DescopeConfig {
   projectId: string;
-  /** OIDC client_id; defaults to the project ID (Descope's default OIDC app). */
-  clientId: string;
-  clientSecret?: string;
   baseUrl: string;
-  appUrl: string;
-  /** Claim holding the user's roles in the ID token. */
+  /** Descope Flow to embed on the login page. */
+  flowId: string;
+  /** Claim holding the user's roles in the session JWT. */
   rolesClaim: string;
   /** Any of these role names grants the docs `admin` role. */
   adminRoles: string[];
-  /** Emails always treated as admin, regardless of roles claim. */
+  /** Emails always treated as admin, regardless of roles. */
   adminEmails: string[];
 }
 
@@ -31,121 +34,60 @@ export function getDescopeConfig(): DescopeConfig | null {
     v ? v.split(',').map((s) => s.trim()).filter(Boolean) : fallback;
   return {
     projectId,
-    clientId: process.env.DESCOPE_CLIENT_ID ?? projectId,
-    clientSecret: process.env.DESCOPE_CLIENT_SECRET || undefined,
     baseUrl: (process.env.DESCOPE_BASE_URL ?? 'https://api.descope.com').replace(/\/$/, ''),
-    appUrl: (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, ''),
+    flowId: process.env.DESCOPE_FLOW_ID ?? 'sign-up-or-in',
     rolesClaim: process.env.DESCOPE_ROLES_CLAIM ?? 'roles',
     adminRoles: csv(process.env.DESCOPE_ADMIN_ROLES, ['admin', 'docs-admin']),
     adminEmails: csv(process.env.DESCOPE_ADMIN_EMAILS, []).map((e) => e.toLowerCase()),
   };
 }
 
-/** Short-lived cookie carrying OIDC state + PKCE verifier between redirects. */
-export const OAUTH_COOKIE = 'smilify_oauth';
-
-export function redirectUri(cfg: DescopeConfig): string {
-  return `${cfg.appUrl}/api/auth/descope/callback`;
-}
-
-interface Discovery {
-  issuer: string;
-  authorization_endpoint: string;
-  token_endpoint: string;
-  jwks_uri: string;
-}
-
-let discoveryCache: { key: string; value: Discovery; at: number } | null = null;
-
-/** OIDC discovery, cached for 10 minutes. */
-export async function getDiscovery(cfg: DescopeConfig): Promise<Discovery> {
-  const key = `${cfg.baseUrl}/${cfg.projectId}`;
-  if (discoveryCache && discoveryCache.key === key && Date.now() - discoveryCache.at < 600_000) {
-    return discoveryCache.value;
-  }
-  const res = await fetch(`${cfg.baseUrl}/${cfg.projectId}/.well-known/openid-configuration`, {
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error(`OIDC discovery failed: HTTP ${res.status}`);
-  const value = (await res.json()) as Discovery;
-  discoveryCache = { key, value, at: Date.now() };
-  return value;
-}
-
-export function randomToken(): string {
-  return randomBytes(32).toString('base64url');
-}
-
-export function pkceChallenge(verifier: string): string {
-  return createHash('sha256').update(verifier).digest('base64url');
-}
-
-export async function buildAuthUrl(
-  cfg: DescopeConfig,
-  state: string,
-  codeChallenge: string
-): Promise<string> {
-  const discovery = await getDiscovery(cfg);
-  const url = new URL(discovery.authorization_endpoint);
-  url.searchParams.set('client_id', cfg.clientId);
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', 'openid email profile');
-  url.searchParams.set('redirect_uri', redirectUri(cfg));
-  url.searchParams.set('state', state);
-  url.searchParams.set('code_challenge', codeChallenge);
-  url.searchParams.set('code_challenge_method', 'S256');
-  return url.toString();
-}
-
-export async function exchangeCode(
-  cfg: DescopeConfig,
-  code: string,
-  codeVerifier: string
-): Promise<string> {
-  const discovery = await getDiscovery(cfg);
-  const body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: redirectUri(cfg),
-    client_id: cfg.clientId,
-    code_verifier: codeVerifier,
-  });
-  if (cfg.clientSecret) body.set('client_secret', cfg.clientSecret);
-  const res = await fetch(discovery.token_endpoint, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body,
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error(`Token exchange failed: HTTP ${res.status}`);
-  const data = (await res.json()) as { id_token?: string };
-  if (!data.id_token) throw new Error('Token response missing id_token');
-  return data.id_token;
-}
-
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
-/** Verify the ID token signature/claims and map it to a docs session user. */
-export async function verifyIdToken(cfg: DescopeConfig, idToken: string): Promise<SessionUser> {
-  const discovery = await getDiscovery(cfg);
-  let jwks = jwksCache.get(discovery.jwks_uri);
+function getJwks(cfg: DescopeConfig) {
+  const url = `${cfg.baseUrl}/${cfg.projectId}/.well-known/jwks.json`;
+  let jwks = jwksCache.get(url);
   if (!jwks) {
-    jwks = createRemoteJWKSet(new URL(discovery.jwks_uri));
-    jwksCache.set(discovery.jwks_uri, jwks);
+    jwks = createRemoteJWKSet(new URL(url));
+    jwksCache.set(url, jwks);
   }
-  const { payload } = await jwtVerify(idToken, jwks, {
-    issuer: discovery.issuer,
-    audience: cfg.clientId,
-  });
-  const email = typeof payload.email === 'string' ? payload.email.toLowerCase() : null;
-  if (!email) throw new Error('ID token missing email claim');
-  const name =
-    typeof payload.name === 'string' && payload.name
-      ? payload.name
-      : email.split('@')[0];
+  return jwks;
+}
+
+/**
+ * Validate a Descope session JWT and map it to a docs session user.
+ * Profile fields missing from the JWT are fetched from Descope's /v1/auth/me
+ * using the (already validated) session token.
+ */
+export async function verifyDescopeSession(
+  cfg: DescopeConfig,
+  sessionJwt: string
+): Promise<SessionUser> {
+  const { payload } = await jwtVerify(sessionJwt, getJwks(cfg));
+  const iss = typeof payload.iss === 'string' ? payload.iss : '';
+  if (!iss.includes(cfg.projectId)) throw new Error('unexpected issuer');
+
+  let email = typeof payload.email === 'string' ? payload.email.toLowerCase() : null;
+  let name = typeof payload.name === 'string' && payload.name ? payload.name : null;
   const claimed = payload[cfg.rolesClaim];
-  const roles = Array.isArray(claimed) ? claimed.filter((r): r is string => typeof r === 'string') : [];
+  let roles = Array.isArray(claimed)
+    ? claimed.filter((r): r is string => typeof r === 'string')
+    : [];
+
+  if (!email) {
+    const res = await fetch(`${cfg.baseUrl}/v1/auth/me`, {
+      headers: { authorization: `Bearer ${cfg.projectId}:${sessionJwt}` },
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`profile lookup failed: HTTP ${res.status}`);
+    const me = (await res.json()) as { email?: string; name?: string; roleNames?: string[] };
+    email = typeof me.email === 'string' ? me.email.toLowerCase() : null;
+    name = name ?? (typeof me.name === 'string' && me.name ? me.name : null);
+    if (roles.length === 0 && Array.isArray(me.roleNames)) roles = me.roleNames;
+  }
+  if (!email) throw new Error('no email on session');
+
   const isAdmin =
     cfg.adminEmails.includes(email) || roles.some((r) => cfg.adminRoles.includes(r));
-  return { email, name, role: isAdmin ? 'admin' : 'member' };
+  return { email, name: name ?? email.split('@')[0], role: isAdmin ? 'admin' : 'member' };
 }

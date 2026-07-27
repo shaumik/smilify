@@ -23,9 +23,11 @@ SESSION_SECRET=$(openssl rand -hex 32) npm run build && npm start
 Two methods, both ending in the same first-party session cookie:
 
 - **Descope SSO (recommended for internal use)** — enabled by setting
-  `DESCOPE_PROJECT_ID` (see `.env.example`). Standard OIDC + PKCE, no vendor
-  SDK. Register `{APP_URL}/api/auth/descope/callback` as a redirect URI in
-  Descope. Descope roles listed in `DESCOPE_ADMIN_ROLES` (default
+  `DESCOPE_PROJECT_ID` (see `.env.example`). The login page embeds a Descope
+  Flow via the official `@descope/react-sdk`, so MFA/passkeys/social/magic
+  links are all configured in the Descope console with zero code changes.
+  One-time setup: add the deployment's origin to the Descope project's
+  approved domains. Descope roles listed in `DESCOPE_ADMIN_ROLES` (default
   `admin, docs-admin`) grant docs admin; everyone else is a member.
 - **Local accounts (break-glass / no-IdP environments)** — directory in
   `lib/auth.ts`, scrypt-hashed:
@@ -67,7 +69,7 @@ Two methods, both ending in the same first-party session cookie:
 | TOC scroll-spy, breadcrumbs, prev/next, feedback widget | `components/` |
 | `llms.txt` | `app/llms.txt/route.ts` |
 | **Authentication + roles (beyond Mintlify's hosted auth)** | `middleware.ts`, `lib/session.ts`, `lib/auth.ts` |
-| **Descope SSO (OIDC + PKCE, role mapping)** | `lib/descope.ts`, `app/api/auth/descope/` |
+| **Descope SSO (embedded Flow + role mapping)** | `lib/descope.ts`, `components/DescopeLogin.tsx` |
 
 ## Architecture
 

@@ -15,11 +15,12 @@ user came through.
 
 <Tabs>
   <Tab title="Descope SSO">
-    With `DESCOPE_PROJECT_ID` set, the login page shows **Continue with
-    Descope SSO**. The app speaks standard OIDC with PKCE to Descope:
-    authorize redirect → code exchange → ID-token verification against
-    Descope's JWKS (issuer + audience checked, state validated, replay
-    rejected). Descope roles in the ID token map to docs roles — anything in
+    With `DESCOPE_PROJECT_ID` set, the login page embeds our **Descope Flow**
+    (via the official `@descope/react-sdk`). The whole sign-in experience —
+    MFA, passkeys, magic links, social login — is configured in the Descope
+    console, with zero code changes here. After the flow succeeds, the server
+    validates Descope's session JWT against Descope's JWKS and mints the docs
+    session. Descope roles map to docs roles — anything in
     `DESCOPE_ADMIN_ROLES` (default `admin, docs-admin`) becomes a docs admin;
     everyone else is a member.
   </Tab>
@@ -78,19 +79,19 @@ results.
 
 ## Configuring Descope
 
-Set the environment variables (see `.env.example`) and register the redirect
-URI in Descope:
+Set the environment variables (see `.env.example`):
 
 ```bash title=".env"
-DESCOPE_PROJECT_ID=P2xxxxxxxxxxxx      # enables the SSO button
-APP_URL=https://docs.internal          # redirect URI base
+DESCOPE_PROJECT_ID=P2xxxxxxxxxxxx      # embeds the Descope flow on /login
+DESCOPE_FLOW_ID=sign-up-or-in          # which flow to show
 DESCOPE_ADMIN_ROLES=docs-admin         # Descope roles that grant docs admin
 ```
 
-Redirect URI to allow in Descope: `{APP_URL}/api/auth/descope/callback`.
+One-time console setup: add this deployment's origin to the Descope
+project's **approved domains** so the embedded flow may run.
 
 <Note>
-  The integration is plain OIDC — no vendor SDK. If we ever move off
-  Descope, any OIDC-compliant IdP works by pointing `DESCOPE_BASE_URL` and
-  the client credentials at it.
+  Changing sign-in policy — enforcing MFA, adding passkeys, restricting to
+  the company domain — is done entirely in the Descope console. The docs
+  platform picks it up immediately because the flow is rendered by Descope.
 </Note>

@@ -4,20 +4,15 @@ import { getSessionUser } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getDescopeConfig } from '@/lib/descope';
 import LoginForm from '@/components/LoginForm';
+import DescopeLogin from '@/components/DescopeLogin';
 
 export const metadata = { title: 'Sign in' };
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: { next?: string };
-}) {
+export default async function LoginPage() {
   const user = await getSessionUser();
   if (user) redirect('/');
   const config = getConfig();
-  const sso = getDescopeConfig() !== null;
-  const next = searchParams.next;
-  const startUrl = `/api/auth/descope/start${next ? `?next=${encodeURIComponent(next)}` : ''}`;
+  const descope = getDescopeConfig();
   return (
     <div className="login-screen">
       <div className="login-card">
@@ -26,11 +21,15 @@ export default async function LoginPage({
           <h1>{config.name} Docs</h1>
           <p>Internal documentation — sign in to continue</p>
         </div>
-        {sso && (
+        {descope && (
           <>
-            <a className="sso-btn" href={startUrl}>
-              Continue with Descope SSO
-            </a>
+            <Suspense>
+              <DescopeLogin
+                projectId={descope.projectId}
+                baseUrl={descope.baseUrl}
+                flowId={descope.flowId}
+              />
+            </Suspense>
             <div className="login-divider">
               <span>or use a local account</span>
             </div>

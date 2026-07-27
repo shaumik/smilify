@@ -9,7 +9,7 @@ import { SESSION_COOKIE, verifySessionToken } from './lib/session';
 const PUBLIC_PATHS = [
   /^\/login$/,
   /^\/api\/auth\/login$/,
-  /^\/api\/auth\/descope(\/|$)/,
+  /^\/api\/auth\/descope\/token$/,
   /^\/api\/v1(\/|$)/,
 ];
 
