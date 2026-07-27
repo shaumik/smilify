@@ -6,7 +6,12 @@ import { SESSION_COOKIE, verifySessionToken } from './lib/session';
 //  - the Smilify API (it enforces its own bearer-token auth,
 //    like any external product API)
 //  - Next.js internals and static assets
-const PUBLIC_PATHS = [/^\/login$/, /^\/api\/auth\/login$/, /^\/api\/v1(\/|$)/];
+const PUBLIC_PATHS = [
+  /^\/login$/,
+  /^\/api\/auth\/login$/,
+  /^\/api\/auth\/descope(\/|$)/,
+  /^\/api\/v1(\/|$)/,
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

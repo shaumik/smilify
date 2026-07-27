@@ -9,11 +9,31 @@ Every route on this site — pages, search, the API playground proxy, even
 
 ## The flow
 
+Two sign-in methods are supported; both end in the exact same session, so
+everything downstream (middleware, roles, search) doesn't care which one a
+user came through.
+
+<Tabs>
+  <Tab title="Descope SSO">
+    With `DESCOPE_PROJECT_ID` set, the login page shows **Continue with
+    Descope SSO**. The app speaks standard OIDC with PKCE to Descope:
+    authorize redirect → code exchange → ID-token verification against
+    Descope's JWKS (issuer + audience checked, state validated, replay
+    rejected). Descope roles in the ID token map to docs roles — anything in
+    `DESCOPE_ADMIN_ROLES` (default `admin, docs-admin`) becomes a docs admin;
+    everyone else is a member.
+  </Tab>
+  <Tab title="Local accounts">
+    Email + password against the directory in `lib/auth.ts`. Passwords are
+    verified against scrypt hashes with per-user salts and constant-time
+    comparison — plaintext passwords are never stored. Kept as a break-glass
+    path and for environments without Descope.
+  </Tab>
+</Tabs>
+
 <Steps>
   <Step title="Sign in">
-    Users authenticate with email + password at `/login`. Passwords are
-    verified against scrypt hashes with a per-user salt and constant-time
-    comparison — plaintext passwords are never stored.
+    Via Descope SSO or a local account, as above.
   </Step>
   <Step title="Session cookie">
     On success the server issues a JWT (HS256, signed with `SESSION_SECRET`)
@@ -56,9 +76,21 @@ Role checks apply in three places: sidebar rendering, page access (non-listed
 roles get a 404, not a 403 — the page's existence isn't leaked), and search
 results.
 
-## Swapping in SSO
+## Configuring Descope
 
-The credential store is a single module (`lib/auth.ts`). To move to Okta,
-Google Workspace, or any OIDC provider, replace `verifyCredentials` with an
-OAuth callback that issues the same session token. Everything downstream —
-middleware, roles, search filtering — stays untouched.
+Set the environment variables (see `.env.example`) and register the redirect
+URI in Descope:
+
+```bash title=".env"
+DESCOPE_PROJECT_ID=P2xxxxxxxxxxxx      # enables the SSO button
+APP_URL=https://docs.internal          # redirect URI base
+DESCOPE_ADMIN_ROLES=docs-admin         # Descope roles that grant docs admin
+```
+
+Redirect URI to allow in Descope: `{APP_URL}/api/auth/descope/callback`.
+
+<Note>
+  The integration is plain OIDC — no vendor SDK. If we ever move off
+  Descope, any OIDC-compliant IdP works by pointing `DESCOPE_BASE_URL` and
+  the client credentials at it.
+</Note>

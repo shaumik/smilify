@@ -18,18 +18,25 @@ Production:
 SESSION_SECRET=$(openssl rand -hex 32) npm run build && npm start
 ```
 
-## Accounts
+## Sign-in
 
-Accounts are managed in `lib/auth.ts` (scrypt-hashed; designed to be swapped
-for SSO/OIDC — see `/authentication` in the app). Current directory:
+Two methods, both ending in the same first-party session cookie:
 
-| Account | Role |
-| --- | --- |
-| `shaumik@echelonai.com` | admin |
-| `guest@echelonai.com` | member |
+- **Descope SSO (recommended for internal use)** — enabled by setting
+  `DESCOPE_PROJECT_ID` (see `.env.example`). Standard OIDC + PKCE, no vendor
+  SDK. Register `{APP_URL}/api/auth/descope/callback` as a redirect URI in
+  Descope. Descope roles listed in `DESCOPE_ADMIN_ROLES` (default
+  `admin, docs-admin`) grant docs admin; everyone else is a member.
+- **Local accounts (break-glass / no-IdP environments)** — directory in
+  `lib/auth.ts`, scrypt-hashed:
 
-Initial passwords were shared out-of-band; rotate by regenerating the hash
-(see the in-app admin page `/admin/user-management`).
+  | Account | Role |
+  | --- | --- |
+  | `shaumik@echelonai.com` | admin |
+  | `guest@echelonai.com` | member |
+
+  Initial passwords were shared out-of-band; rotate by regenerating the hash
+  (see the in-app admin page `/admin/user-management`).
 
 ## Live demo script
 
@@ -60,6 +67,7 @@ Initial passwords were shared out-of-band; rotate by regenerating the hash
 | TOC scroll-spy, breadcrumbs, prev/next, feedback widget | `components/` |
 | `llms.txt` | `app/llms.txt/route.ts` |
 | **Authentication + roles (beyond Mintlify's hosted auth)** | `middleware.ts`, `lib/session.ts`, `lib/auth.ts` |
+| **Descope SSO (OIDC + PKCE, role mapping)** | `lib/descope.ts`, `app/api/auth/descope/` |
 
 ## Architecture
 

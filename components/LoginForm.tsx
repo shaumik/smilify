@@ -8,7 +8,14 @@ export default function LoginForm() {
   const params = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const ssoError = params.get('error');
+  const [error, setError] = useState<string | null>(
+    ssoError === 'sso_failed'
+      ? 'SSO sign-in failed. Try again or use a local account.'
+      : ssoError === 'sso_not_configured'
+        ? 'SSO is not configured on this deployment.'
+        : null
+  );
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
