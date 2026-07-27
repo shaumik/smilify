@@ -90,8 +90,8 @@ flowchart LR
 
 Also lives in the product at `/platform/mintlify-parity`. Summary: at or
 beyond parity across authoring, API reference, AI/agents, and auth — and
-self-hosted, which Mintlify can't offer. Remaining gaps: WYSIWYG web editor,
-translations, AsyncAPI.
+self-hosted, which Mintlify can't offer. Remaining gaps: WYSIWYG web editor and
+translations.
 
 **✅ built · 🟡 partial · ❌ not built**
 
@@ -121,7 +121,7 @@ translations, AsyncAPI.
 | OpenAPI-generated reference pages | ✅ | One frontmatter line per endpoint |
 | Interactive playground | ✅ | Live requests against `/api/v1` |
 | Generated code samples | ✅ | cURL, Python, JavaScript, TypeScript, Go, Rust |
-| AsyncAPI | ❌ | |
+| AsyncAPI | ✅ | `asyncapi/asyncapi.json` → generated event pages |
 
 ### AI & agents
 

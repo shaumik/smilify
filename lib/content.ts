@@ -10,6 +10,7 @@ export interface PageFrontmatter {
   description?: string;
   icon?: string;
   openapi?: string;
+  asyncapi?: string;
   mode?: 'wide' | 'default';
 }
 
