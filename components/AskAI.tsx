@@ -10,11 +10,11 @@ interface Source {
 }
 
 // Render [slug] citations as links to the cited page.
-function renderAnswer(answer: string, onNavigate: () => void) {
+function renderAnswer(site: string, answer: string, onNavigate: () => void) {
   const parts = answer.split(/\[([a-z0-9-]+(?:\/[a-z0-9-]+)*)\]/g);
   return parts.map((part, i) =>
     i % 2 === 1 ? (
-      <Link key={i} href={`/${part}`} className="ask-citation" onClick={onNavigate}>
+      <Link key={i} href={`/${site}/${part}`} className="ask-citation" onClick={onNavigate}>
         {part.split('/').pop()}
       </Link>
     ) : (
@@ -23,7 +23,7 @@ function renderAnswer(answer: string, onNavigate: () => void) {
   );
 }
 
-export default function AskAI({ onClose }: { onClose: () => void }) {
+export default function AskAI({ site, onClose }: { site: string; onClose: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [question, setQuestion] = useState('');
@@ -50,7 +50,7 @@ export default function AskAI({ onClose }: { onClose: () => void }) {
       const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, site }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -99,12 +99,12 @@ export default function AskAI({ onClose }: { onClose: () => void }) {
           {error && <div className="search-empty">{error}</div>}
           {answer && (
             <div className="ask-answer">
-              <p>{renderAnswer(answer, onClose)}</p>
+              <p>{renderAnswer(site, answer, onClose)}</p>
               {sources.length > 0 && (
                 <div className="ask-sources">
                   <span>Sources</span>
                   {sources.map((s) => (
-                    <Link key={s.slug} href={`/${s.slug}`} onClick={onClose}>
+                    <Link key={s.slug} href={`/${site}/${s.slug}`} onClick={onClose}>
                       {s.title}
                     </Link>
                   ))}

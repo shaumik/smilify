@@ -47,17 +47,18 @@ const Danger = (p: { children: React.ReactNode }) => (
 
 // ---- Cards -------------------------------------------------------------
 
-function Card({
-  title,
-  icon,
-  href,
-  children,
-}: {
-  title: string;
-  icon?: string;
-  href?: string;
-  children?: React.ReactNode;
-}) {
+function makeCard(prefix: (href: string) => string) {
+  return function Card({
+    title,
+    icon,
+    href,
+    children,
+  }: {
+    title: string;
+    icon?: string;
+    href?: string;
+    children?: React.ReactNode;
+  }) {
   const body = (
     <>
       {icon && (
@@ -69,14 +70,15 @@ function Card({
       {children && <div className="card-body">{children}</div>}
     </>
   );
-  if (href) {
-    return (
-      <Link href={href} className="card card-link">
-        {body}
-      </Link>
-    );
-  }
-  return <div className="card">{body}</div>;
+    if (href) {
+      return (
+        <Link href={prefix(href)} className="card card-link">
+          {body}
+        </Link>
+      );
+    }
+    return <div className="card">{body}</div>;
+  };
 }
 
 function CardGroup({ cols = 2, children }: { cols?: number; children: React.ReactNode }) {
@@ -269,28 +271,40 @@ function heading(Tag: 'h2' | 'h3' | 'h4') {
   };
 }
 
-function Anchor({ href = '', children, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
-  const external = /^https?:\/\//.test(href);
-  if (external) {
+function makeAnchor(prefix: (href: string) => string) {
+  return function Anchor({ href = '', children, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+    const external = /^https?:\/\//.test(href) || href.startsWith('mailto:');
+    if (external) {
+      return (
+        <a href={href} target="_blank" rel="noreferrer" {...rest}>
+          {children}
+          <Icon name="external-link" size={11} className="external-icon" />
+        </a>
+      );
+    }
     return (
-      <a href={href} target="_blank" rel="noreferrer" {...rest}>
+      <Link href={prefix(href)} {...rest}>
         {children}
-        <Icon name="external-link" size={11} className="external-icon" />
-      </a>
+      </Link>
     );
-  }
-  return (
-    <Link href={href} {...rest}>
-      {children}
-    </Link>
-  );
+  };
 }
 
-export const mdxComponents = {
+/**
+ * Build the component map bound to a site: internal links in content are
+ * site-relative (Mintlify convention) and get prefixed with /<site>;
+ * snippets resolve from that site's repo.
+ */
+export function makeMdxComponents(site: string) {
+  const prefix = (href: string) => {
+    if (!href.startsWith('/') || href.startsWith('//')) return href;
+    return `/${site}${href}`;
+  };
+  return {
   h2: heading('h2'),
   h3: heading('h3'),
   h4: heading('h4'),
-  a: Anchor,
+  a: makeAnchor(prefix),
   pre: CodeBlock,
   table: (props: React.TableHTMLAttributes<HTMLTableElement>) => (
     <div className="table-wrap">
@@ -307,7 +321,7 @@ export const mdxComponents = {
   Tip,
   Check,
   Danger,
-  Card,
+  Card: makeCard(prefix),
   CardGroup,
   Accordion,
   AccordionGroup,
@@ -323,5 +337,6 @@ export const mdxComponents = {
   Tabs,
   Tab,
   CodeGroup,
-  Snippet,
-};
+  Snippet: (props: { file: string }) => <Snippet {...props} site={site} />,
+  };
+}

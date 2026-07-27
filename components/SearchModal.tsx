@@ -13,7 +13,7 @@ interface Result {
   snippet: string;
 }
 
-export default function SearchModal({ onClose }: { onClose: () => void }) {
+export default function SearchModal({ site, onClose }: { site: string; onClose: () => void }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
@@ -33,7 +33,7 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/search?site=${encodeURIComponent(site)}&q=${encodeURIComponent(query)}`);
         if (res.ok) {
           const data = await res.json();
           setResults(data.results ?? []);
@@ -48,7 +48,7 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
 
   function go(slug: string) {
     onClose();
-    router.push(`/${slug}`);
+    router.push(`/${site}/${slug}`);
   }
 
   function onKeyDown(e: React.KeyboardEvent) {

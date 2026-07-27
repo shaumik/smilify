@@ -47,7 +47,7 @@ Status of every Mintlify capability versus this platform.
 | --- | --- | --- |
 | `llms.txt` | ✅ | Role-aware; token auth for agents |
 | `llms-full.txt` (full content dump) | ✅ | Entire docs set as one markdown document |
-| Serve pages as raw Markdown to agents | ✅ | Any page at `/<slug>.md` |
+| Serve pages as raw Markdown to agents | ✅ | Any page at `/<site>/<page>.md` |
 | Auto-generated MCP server per docs site | ✅ | `POST /api/mcp`: search_docs, read_page, list_pages — see [Agent access](/platform/ai/agent-access) |
 | Embedded AI assistant with citations | ✅ | [Ask AI](/platform/ai/assistant), Claude-backed, search-grounded |
 | Docs agent that proposes updates ("self-updating") | ✅ | [Claude Code in CI](/platform/ai/docs-agent) opens doc-sync PRs on merge |
@@ -57,7 +57,9 @@ Status of every Mintlify capability versus this platform.
 
 | Mintlify feature | Us | Notes |
 | --- | --- | --- |
-| Docs-as-code (git-native) | ✅ | The site *is* a repo; agents and humans edit the same files |
+| Docs-as-code (git-native) | ✅ | Every docs site is a plain repo; agents and humans edit the same files |
+| GitHub App: connect any repo, sync on push | ✅ | [Connected repos](/admin/connecting-repos) — install the App, connect `owner/repo`, pushes sync via webhook |
+| Multiple docs sites per deployment | ✅ | Each connected repo serves at `/<slug>` with its own branding, search, and agent surfaces |
 | WYSIWYG web editor with git sync | ❌ | Largest remaining gap for non-technical editors |
 | Preview deployments per PR | ✅ | `docs-ci.yml`: build + link check + preview deploy hook + PR comment |
 | CI checks (broken links, lint) | ✅ | `npm run check-links` in CI |

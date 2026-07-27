@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getSessionUser } from '@/lib/auth';
 import { readEvents } from '@/lib/analytics';
 import { getPage } from '@/lib/content';
+import { SELF_SLUG } from '@/lib/sites';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
 export const dynamic = 'force-dynamic';
@@ -63,7 +64,9 @@ function BarList({ rows, unit }: { rows: [string, number][]; unit: string }) {
   );
 }
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({ params }: { params: { site: string } }) {
+  // Platform-wide dashboard: lives on the built-in site only.
+  if (params.site !== SELF_SLUG) notFound();
   const user = await getSessionUser();
   if (!user || user.role !== 'admin') notFound();
 
@@ -99,11 +102,11 @@ export default async function AnalyticsPage() {
     },
   ];
 
-  const stub = getPage('admin/analytics');
+  const stub = getPage(SELF_SLUG, 'admin/analytics');
 
   return (
     <article className="doc-article dash-article">
-      <Breadcrumbs slug="admin/analytics" />
+      <Breadcrumbs site={SELF_SLUG} slug="admin/analytics" />
       <header className="doc-header">
         <h1>Analytics</h1>
         <p>{stub?.frontmatter.description ?? 'Traffic, search, agent, and feedback activity.'}</p>

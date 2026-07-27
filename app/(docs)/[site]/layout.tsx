@@ -1,8 +1,9 @@
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/auth';
 import {
   defaultVersion,
+  DocsConfig,
   getConfig,
   getNavigationForRole,
   getVersions,
@@ -10,10 +11,23 @@ import {
   NavGroup,
 } from '@/lib/config';
 import { getPage } from '@/lib/content';
+import { getSite, getSites } from '@/lib/sites';
 import Topbar from '@/components/Topbar';
 import Sidebar from '@/components/Sidebar';
 
 export const VERSION_COOKIE = 'smilify_version';
+
+export function generateMetadata({ params }: { params: { site: string } }) {
+  try {
+    const config = getConfig(params.site);
+    return {
+      title: { default: config.name, template: `%s - ${config.name}` },
+      description: config.description,
+    };
+  } catch {
+    return {};
+  }
+}
 
 export interface NavPageData {
   kind: 'page';
@@ -34,10 +48,10 @@ export interface NavTabData {
   groups: NavGroupData[];
 }
 
-function toGroupData(g: NavGroup): NavGroupData {
+function toGroupData(site: string, g: NavGroup): NavGroupData {
   const items = g.pages.map((entry: NavEntry): NavPageData | NavGroupData => {
     if (typeof entry === 'string') {
-      const page = getPage(entry);
+      const page = getPage(site, entry);
       return {
         kind: 'page',
         slug: entry,
@@ -45,34 +59,57 @@ function toGroupData(g: NavGroup): NavGroupData {
         icon: page?.frontmatter.icon,
       };
     }
-    return toGroupData(entry);
+    return toGroupData(site, entry);
   });
   return { kind: 'group', group: g.group, access: g.access, items };
 }
 
-export default async function DocsLayout({ children }: { children: React.ReactNode }) {
+export default async function DocsLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { site: string };
+}) {
   const user = await getSessionUser();
   if (!user) redirect('/login');
-  const config = getConfig();
+  const site = params.site;
+  if (!getSite(site)) notFound();
 
-  const versions = getVersions();
+  let config: DocsConfig;
+  try {
+    config = getConfig(site);
+  } catch {
+    // Connected repo hasn't synced successfully yet.
+    notFound();
+  }
+
+  const versions = getVersions(site);
   const cookieVersion = cookies().get(VERSION_COOKIE)?.value;
   const version =
     versions.length > 0
       ? versions.includes(cookieVersion ?? '')
         ? cookieVersion!
-        : defaultVersion()
+        : defaultVersion(site)
       : undefined;
 
-  const nav: NavTabData[] = getNavigationForRole(user.role, version).map((tab) => ({
+  const nav: NavTabData[] = getNavigationForRole(site, user.role, version).map((tab) => ({
     tab: tab.tab,
-    groups: tab.groups.map(toGroupData),
+    groups: tab.groups.map((g) => toGroupData(site, g)),
   }));
+
+  const sites = getSites().map((s) => ({ slug: s.slug, name: s.name }));
+
+  const { colors } = config;
+  const cssVars = `:root{--primary:${colors.primary};--primary-light:${colors.light ?? colors.primary};--primary-dark:${colors.dark ?? colors.primary};}`;
 
   return (
     <div className="docs-shell">
+      <style dangerouslySetInnerHTML={{ __html: cssVars }} />
       <Topbar
         name={config.name}
+        site={site}
+        sites={sites}
         nav={nav}
         links={config.navbar?.links ?? []}
         user={user}
@@ -81,6 +118,7 @@ export default async function DocsLayout({ children }: { children: React.ReactNo
       />
       <div className="docs-body">
         <Sidebar
+          site={site}
           nav={nav}
           anchors={config.navigation.global?.anchors ?? []}
           socials={config.footer?.socials ?? {}}
