@@ -41,7 +41,8 @@
               "platform/search",
               "platform/theming",
               "platform/access-control",
-              "platform/llms-txt"
+              "platform/llms-txt",
+              "platform/mintlify-parity"
             ]
           },
           {
