@@ -22,12 +22,27 @@ permissions:
 jobs:
   sync-docs:
     runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
+      # Skip gracefully (job stays green) until the secret is configured.
+      - name: Check for ANTHROPIC_API_KEY
+        id: key
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Docs agent skipped — set the ANTHROPIC_API_KEY repository secret to enable it."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.key.outputs.configured == 'true'
         with:
           fetch-depth: 2
 
       - uses: anthropics/claude-code-action@v1
+        if: steps.key.outputs.configured == 'true'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
