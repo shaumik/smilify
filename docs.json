@@ -8,6 +8,13 @@
     "dark": "#15803d"
   },
   "navigation": {
+    "versions": ["v2", "v1"],
+    "global": {
+      "anchors": [
+        { "anchor": "Slack", "href": "https://echelonai.slack.com", "icon": "slack" },
+        { "anchor": "Repository", "href": "https://github.com/shaumik/smilify", "icon": "github" }
+      ]
+    },
     "tabs": [
       {
         "tab": "Documentation",
@@ -21,6 +28,7 @@
             "pages": [
               "writing/pages",
               "writing/navigation",
+              "writing/snippets",
               "writing/code-blocks",
               "writing/images-and-embeds"
             ]
@@ -41,14 +49,23 @@
               "platform/search",
               "platform/theming",
               "platform/access-control",
+              "platform/versioning",
               "platform/llms-txt",
+              {
+                "group": "AI & agents",
+                "pages": [
+                  "platform/ai/agent-access",
+                  "platform/ai/assistant",
+                  "platform/ai/docs-agent"
+                ]
+              },
               "platform/mintlify-parity"
             ]
           },
           {
             "group": "Admin",
             "access": "admin",
-            "pages": ["admin/deployment", "admin/user-management"]
+            "pages": ["admin/deployment", "admin/user-management", "admin/analytics"]
           }
         ]
       },
@@ -71,6 +88,11 @@
           {
             "group": "Sentiment",
             "pages": ["api-reference/sentiment/analyze"]
+          },
+          {
+            "group": "Legacy",
+            "version": "v1",
+            "pages": ["api-reference/legacy/overview"]
           }
         ]
       },

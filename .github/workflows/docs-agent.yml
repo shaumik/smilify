@@ -1,0 +1,50 @@
+name: Docs agent (self-updating docs)
+
+# On every merge to main that touches application code, a Claude Code agent
+# reviews the diff and opens a PR updating any documentation it invalidated.
+# The agent proposes; humans approve the PR. Requires the ANTHROPIC_API_KEY
+# repository secret.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'components/**'
+      - 'middleware.ts'
+      - 'openapi/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are the documentation agent for this repository (a docs
+            platform whose content lives in content/**.mdx, navigation in
+            docs.json, and API spec in openapi/openapi.json).
+
+            Review the diff of the most recent commit on main
+            (git show HEAD). Decide whether it changes behavior that the
+            documentation describes: routes, environment variables, auth
+            flows, component props, API endpoints, or configuration.
+
+            - If nothing documented changed: do nothing and finish.
+            - If docs are now stale: update the affected content/ pages (and
+              docs.json / openapi if needed), keeping the existing tone and
+              style. Create a branch named docs-agent/sync-<short-sha>,
+              commit with message "docs: sync with <short-sha>", push it,
+              and open a pull request describing exactly what changed and
+              why. Never commit directly to main.
+          claude_args: '--allowed-tools "Bash(git:*),Bash(gh pr create:*),Read,Write,Edit,Glob,Grep"'

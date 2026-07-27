@@ -1,0 +1,24 @@
+---
+title: v1 API (legacy)
+description: The deprecated v1 Smilify API
+icon: warning
+---
+
+<Warning>
+  The v1 API was retired in June 2026. This page exists for teams still
+  migrating — all new integrations must use `/api/v1` documented in the
+  current version.
+</Warning>
+
+## What changed in v2
+
+| v1 | v2 |
+| --- | --- |
+| `GET /api/demo/v1/smiles` | `GET /api/v1/smiles` |
+| API keys `sk_demo_*` | Workspace keys `sk_smilify_*` |
+| Unauthenticated reads | Bearer key required on every endpoint |
+
+## Migration
+
+Update the base URL and rotate to a workspace key. Request and response
+shapes are unchanged.

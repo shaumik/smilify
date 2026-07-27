@@ -1,0 +1,35 @@
+---
+title: Reusable snippets
+description: Write content once, include it on any page
+icon: file
+---
+
+Snippets are MDX fragments in `content/snippets/` that can be included on any
+page — the same as Mintlify's snippets. Change the snippet file once and every
+page that includes it updates.
+
+## Creating a snippet
+
+```mdx title="content/snippets/api-key-note.mdx"
+<Info>
+  Sandbox environments are pre-provisioned with a workspace API key. For
+  production keys, ask in **#platform**.
+</Info>
+```
+
+## Including it
+
+```mdx
+<Snippet file="api-key-note" />
+```
+
+Renders as:
+
+<Snippet file="api-key-note" />
+
+## Notes
+
+- Snippets support the full component library and code blocks.
+- Files in `content/snippets/` are not routable pages — they only exist
+  inside the pages that include them.
+- A missing snippet renders a visible warning instead of breaking the page.

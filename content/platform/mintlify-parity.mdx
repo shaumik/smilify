@@ -13,11 +13,11 @@ Status of every Mintlify capability versus this platform.
 | --- | --- | --- |
 | MDX pages + frontmatter | ✅ | `content/**/*.mdx` |
 | `docs.json` config (tabs, groups, colors, navbar, footer) | ✅ | Same schema shape; migration is mostly copy-paste |
-| Nav anchors / dropdowns / multi-level nesting | 🟡 | Tabs + groups only |
+| Nav anchors, nested groups, version dropdown | ✅ | Global anchors, recursive sub-groups, [versioning](/platform/versioning) |
 | Component library (callouts, cards, tabs, accordions, steps, fields, frames, updates, tooltips) | ✅ | See the Components section |
 | Code blocks: highlighting, titles, line highlighting, copy, code groups | ✅ | Shiki, dual light/dark themes |
 | Images, frames, embeds | ✅ | Plain HTML also works in MDX |
-| Reusable snippets | ❌ | Would be an MDX include mechanism |
+| Reusable snippets | ✅ | [`<Snippet file="…" />`](/writing/snippets) from `content/snippets/` |
 
 ## Site experience
 
@@ -38,29 +38,29 @@ Status of every Mintlify capability versus this platform.
 | --- | --- | --- |
 | OpenAPI-generated reference pages | ✅ | One frontmatter line per endpoint |
 | Interactive playground ("Try it") | ✅ | Live requests against `/api/v1` |
-| Generated code samples | 🟡 | cURL / Python / JavaScript; Mintlify covers more languages |
+| Generated code samples | ✅ | cURL, Python, JavaScript, TypeScript, Go, Rust |
 | AsyncAPI (event-driven APIs) | ❌ | |
 
 ## AI & agents
 
 | Mintlify feature | Us | Notes |
 | --- | --- | --- |
-| `llms.txt` | ✅ | Role-aware, auth-walled |
-| `llms-full.txt` (full content dump) | ❌ | Trivial to add |
-| Serve pages as raw Markdown to agents | ❌ | Easy to add (`.md` suffix routes) |
-| Auto-generated MCP server per docs site | ❌ | ~a day: search + fetch tools over the content |
-| Embedded AI assistant with citations | ❌ | Needs an LLM backend (internal Claude API) |
-| Docs agent that proposes updates ("self-updating") | ❌ | See below — infrastructure ready, automation not built |
-| AI traffic analytics | ❌ | |
+| `llms.txt` | ✅ | Role-aware; token auth for agents |
+| `llms-full.txt` (full content dump) | ✅ | Entire docs set as one markdown document |
+| Serve pages as raw Markdown to agents | ✅ | Any page at `/<slug>.md` |
+| Auto-generated MCP server per docs site | ✅ | `POST /api/mcp`: search_docs, read_page, list_pages — see [Agent access](/platform/ai/agent-access) |
+| Embedded AI assistant with citations | ✅ | [Ask AI](/platform/ai/assistant), Claude-backed, search-grounded |
+| Docs agent that proposes updates ("self-updating") | ✅ | [Claude Code in CI](/platform/ai/docs-agent) opens doc-sync PRs on merge |
+| AI traffic analytics | ✅ | Agent-classified logging + [dashboard](/admin/analytics) |
 
 ## Editing & workflow
 
 | Mintlify feature | Us | Notes |
 | --- | --- | --- |
 | Docs-as-code (git-native) | ✅ | The site *is* a repo; agents and humans edit the same files |
-| WYSIWYG web editor with git sync | ❌ | Largest gap for non-technical editors |
-| Preview deployments per PR | ❌ | Straightforward with our CI |
-| CI checks (broken links, lint) | ❌ | |
+| WYSIWYG web editor with git sync | ❌ | Largest remaining gap for non-technical editors |
+| Preview deployments per PR | ✅ | `docs-ci.yml`: build + link check + preview deploy hook + PR comment |
+| CI checks (broken links, lint) | ✅ | `npm run check-links` in CI |
 
 ## Enterprise
 
@@ -69,26 +69,27 @@ Status of every Mintlify capability versus this platform.
 | Authentication | ✅ | Stronger than Mintlify's default: *every* route is auth-walled, self-hosted, Descope SSO |
 | Partial authentication (public + private mix) | 🟡 | We do authenticated role-gating; no public/anonymous tier |
 | Personalization (per-user API keys, plan-based content) | 🟡 | Role-based content works; playground key is static |
-| Versioning | ❌ | |
+| Versioning | ✅ | [Version dropdown](/platform/versioning) filtering navigation |
 | Localization / continuous translations | ❌ | |
-| Analytics dashboard | ❌ | Feedback captured as JSONL only |
+| Analytics dashboard | ✅ | [Admin dashboard](/admin/analytics): traffic, searches, agents, feedback |
 
 ## On "self-updating documentation"
 
 Mintlify's pitch is *"the knowledge platform built for agents"* — docs that
 agents can read, and an agent that keeps docs updated via pull requests.
-Where we honestly stand:
+Where we stand:
 
-- **Agents reading us**: partially true today — docs are plain MDX in git
-  plus a role-aware `llms.txt`. The full agent-readability layer
-  (`llms-full.txt`, raw Markdown serving, MCP) is not built yet.
-- **Self-updating**: true for the API reference only — it regenerates from
-  the OpenAPI spec on every request, so spec changes are live instantly.
-  Prose does not update itself; nothing watches the codebase and proposes
-  doc changes.
+- **Agents reading us**: built. Plain MDX in git, role-aware `llms.txt` and
+  `llms-full.txt`, every page at `/<slug>.md`, an
+  [MCP server](/platform/ai/agent-access), token auth for agents, and an
+  embedded [Ask AI assistant](/platform/ai/assistant).
+- **Self-updating**: the API reference regenerates from the OpenAPI spec on
+  every request, and the [docs agent workflow](/platform/ai/docs-agent) runs
+  Claude Code on each merge to propose doc-sync PRs for prose. Humans still
+  approve every change — by design.
 
 <Note>
-  The credible path to parity here: since docs are git-native, a CI job can
-  run a coding agent (e.g. Claude Code) on merge to draft doc updates as
-  PRs — the same workflow that built this platform.
+  The one honest caveat: the CI workflows (docs agent, preview deployments)
+  ship configured but exercise only in GitHub Actions with the repository
+  secrets set — validate them on the first real merge.
 </Note>

@@ -1,0 +1,38 @@
+---
+title: Versioning
+description: Publish multiple documentation versions side by side
+icon: list
+---
+
+The version dropdown in the top bar switches the docs set. Configure versions
+in `docs.json`:
+
+```json title="docs.json" {2,8}
+{
+  "navigation": {
+    "versions": ["v2", "v1"],
+    "tabs": [{
+      "tab": "API Reference",
+      "groups": [{
+        "group": "Legacy",
+        "version": "v1",
+        "pages": ["api-reference/legacy/overview"]
+      }]
+    }]
+  }
+}
+```
+
+## How it works
+
+- The first entry in `versions` is the default.
+- Groups (or nested sub-groups) tagged with `"version"` appear only when that
+  version is selected; untagged groups appear in **every** version.
+- The selection is stored in a cookie and applies to navigation and the
+  previous/next footer. Search spans all versions.
+
+<Info>
+  Try it: switch the dropdown to **v1** and open the API Reference tab — a
+  Legacy group appears. Direct links to versioned pages always work regardless
+  of the selected version.
+</Info>
