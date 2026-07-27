@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getDescopeConfig } from '@/lib/descope';
-import LoginForm from '@/components/LoginForm';
 import DescopeLogin from '@/components/DescopeLogin';
 
 export const metadata = { title: 'Sign in' };
@@ -21,23 +20,24 @@ export default async function LoginPage() {
           <h1>{config.name} Docs</h1>
           <p>Internal documentation — sign in to continue</p>
         </div>
-        {descope && (
-          <>
-            <Suspense>
-              <DescopeLogin
-                projectId={descope.projectId}
-                baseUrl={descope.baseUrl}
-                flowId={descope.flowId}
-              />
-            </Suspense>
-            <div className="login-divider">
-              <span>or use a local account</span>
-            </div>
-          </>
+        {descope ? (
+          <Suspense>
+            <DescopeLogin
+              projectId={descope.projectId}
+              baseUrl={descope.baseUrl}
+              flowId={descope.flowId}
+            />
+          </Suspense>
+        ) : (
+          <div className="login-setup">
+            <strong>Authentication isn&apos;t configured.</strong>
+            <p>
+              This deployment signs in exclusively through Descope. Set
+              <code> DESCOPE_PROJECT_ID</code> (see <code>.env.example</code>) and add this
+              origin to the Descope project&apos;s approved domains, then restart.
+            </p>
+          </div>
         )}
-        <Suspense>
-          <LoginForm />
-        </Suspense>
       </div>
     </div>
   );

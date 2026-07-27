@@ -21,8 +21,9 @@ into `content/`.
   by the viewer's role.
 - **API reference** — pages generated from the OpenAPI spec: params,
   responses, code samples, and a live "Try it" playground.
-- **Auth everywhere** — Descope SSO + local break-glass accounts. Every route
-  (pages, search, `llms.txt`) requires a session.
+- **Auth everywhere** — Descope SSO is the only sign-in path (no password
+  form, no credential store in the repo). Every route requires a session;
+  agents use a bearer token.
 - **Role-gated content** — admin-only nav groups vanish for members; direct
   URLs 404; search results filtered before leaving the server.
 - **Reading experience** — dark mode, TOC scroll-spy, breadcrumbs, prev/next,
@@ -45,7 +46,7 @@ into `content/`.
 | Highlighting | Shiki via `rehype-pretty-code` | GitHub-quality tokens, both themes emitted in one pass |
 | Search | MiniSearch, in-memory index | No search service to run; role filtering applied at query time on the server |
 | Sessions | HS256 JWT cookies (`jose`), HTTP-only | Stateless — no session store; verified at the edge on every request |
-| Identity | Descope Flow (`@descope/react-sdk`) + scrypt local fallback | MFA/passkeys/social configured in the Descope console, zero code here |
+| Identity | Descope Flow (`@descope/react-sdk`) — sole sign-in path | MFA/passkeys/social and role assignment all live in the Descope console |
 | API reference | `openapi/openapi.json` → generated pages + playground | Spec changes are live instantly; playground hits the in-app API at `/api/v1` |
 | Feedback | Append-only JSONL on disk | The one write path; swappable for an analytics pipeline |
 
@@ -76,13 +77,12 @@ flowchart LR
 
 ### Sign-in
 
-Both paths mint the same first-party session:
+Descope-only — roles come from Descope claims:
 
 ```mermaid
 flowchart LR
-    D[Descope Flow widget: MFA, passkeys, social] -- session JWT --> T[POST /api/auth/descope/token: verify vs Descope JWKS, map roles]
-    P[Local account: scrypt verify] --> S[HS256 session cookie, HTTP-only, 7d]
-    T --> S
+    D[Descope Flow widget: MFA, passkeys, social] -- session JWT --> T[POST /api/auth/descope/token: verify vs Descope JWKS, map roles via DESCOPE_ADMIN_ROLES]
+    T --> S[HS256 session cookie, HTTP-only, 7d]
     S --> G[Middleware + role gating: nav, pages, search]
 ```
 
@@ -174,15 +174,17 @@ npm run dev        # http://localhost:3000
 SESSION_SECRET=$(openssl rand -hex 32) npm run build && npm start
 ```
 
-**Sign-in** — two methods, both ending in the same session cookie:
+**Sign-in is Descope-only** — no password form, no credential store in the
+repo. Set `DESCOPE_PROJECT_ID` (see `.env.example`) and add the deployment
+origin to the Descope project's approved domains; without it the login page
+shows a setup notice and nobody can sign in.
 
-- **Descope SSO**: set `DESCOPE_PROJECT_ID` (see `.env.example`) and add the
-  deployment origin to the Descope project's approved domains. Descope roles
-  in `DESCOPE_ADMIN_ROLES` (default `admin, docs-admin`) grant docs admin.
-- **Local accounts (break-glass)**: directory in `lib/auth.ts`, scrypt-hashed
-  — `shaumik@echelonai.com` (admin), `guest@echelonai.com` (member).
-  Passwords were shared out-of-band; rotate via `/admin/user-management`.
+**Roles** come from Descope claims: any Descope role listed in
+`DESCOPE_ADMIN_ROLES` (default `admin, docs-admin`) grants docs admin;
+everyone else who can sign in is a member. `DESCOPE_ADMIN_EMAILS`
+force-grants admin for bootstrapping the first admin. Assign roles in the
+Descope console (Users → assign role); they apply on next sign-in.
 
 **Live demo script**: auth wall → sidebar/search/dark mode → Components
-section → API playground (real `201`, clear key for `401`) → sign in as
-member to show role gating → `/llms.txt`.
+section → API playground (real `201`, clear key for `401`) → sign in with a
+non-admin Descope user to show role gating → `/llms.txt`.

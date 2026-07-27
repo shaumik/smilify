@@ -45,7 +45,7 @@ export default function DescopeLogin({
               setError('Sign-in succeeded but the session could not be established. Try again.');
             }
           }}
-          onError={() => setError('SSO sign-in failed. Try again or use a local account.')}
+          onError={() => setError('Sign-in failed. Try again or contact #platform.')}
         />
       </AuthProvider>
     </div>
