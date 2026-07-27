@@ -93,6 +93,17 @@ a:hover { text-decoration: underline; }
   border-top: 1px solid var(--border);
 }
 
+.login-setup {
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.login-setup strong { color: var(--text); }
+.login-setup p { margin: 8px 0 0; }
+
 .login-form { display: flex; flex-direction: column; gap: 14px; }
 .login-form label {
   display: flex; flex-direction: column; gap: 6px;

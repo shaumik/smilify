@@ -32,11 +32,10 @@ icon: rocket
     Put the app behind the standard internal nginx/ALB with HTTPS. The session
     cookie is marked `Secure` in production builds.
   </Step>
-  <Step title="Enable Descope SSO">
-    Set `DESCOPE_PROJECT_ID` and `APP_URL`, and register
-    `{APP_URL}/api/auth/descope/callback` as a redirect URI in Descope
-    (see [Authentication](/authentication)). Local accounts remain as a
-    break-glass path.
+  <Step title="Configure Descope">
+    Sign-in is Descope-only: set `DESCOPE_PROJECT_ID` and add the deployment
+    origin to the Descope project's approved domains (see
+    [Authentication](/authentication)). Without it, nobody can sign in.
   </Step>
 </Steps>
 

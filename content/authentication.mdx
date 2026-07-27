@@ -9,32 +9,17 @@ Every route on this site — pages, search, the API playground proxy, even
 
 ## The flow
 
-Two sign-in methods are supported; both end in the exact same session, so
-everything downstream (middleware, roles, search) doesn't care which one a
-user came through.
-
-<Tabs>
-  <Tab title="Descope SSO">
-    With `DESCOPE_PROJECT_ID` set, the login page embeds our **Descope Flow**
-    (via the official `@descope/react-sdk`). The whole sign-in experience —
-    MFA, passkeys, magic links, social login — is configured in the Descope
-    console, with zero code changes here. After the flow succeeds, the server
-    validates Descope's session JWT against Descope's JWKS and mints the docs
-    session. Descope roles map to docs roles — anything in
-    `DESCOPE_ADMIN_ROLES` (default `admin, docs-admin`) becomes a docs admin;
-    everyone else is a member.
-  </Tab>
-  <Tab title="Local accounts">
-    Email + password against the directory in `lib/auth.ts`. Passwords are
-    verified against scrypt hashes with per-user salts and constant-time
-    comparison — plaintext passwords are never stored. Kept as a break-glass
-    path and for environments without Descope.
-  </Tab>
-</Tabs>
+Sign-in is **Descope only** — there is no password form and no credential
+store in this codebase. The login page embeds our Descope Flow (via the
+official `@descope/react-sdk`), so the entire sign-in experience — MFA,
+passkeys, magic links, social login — is configured in the Descope console
+with zero code changes here.
 
 <Steps>
-  <Step title="Sign in">
-    Via Descope SSO or a local account, as above.
+  <Step title="Sign in via Descope">
+    The embedded flow authenticates the user against Descope. On success the
+    server validates Descope's session JWT against Descope's JWKS (signature,
+    expiry, issuer) and mints the docs session.
   </Step>
   <Step title="Session cookie">
     On success the server issues a JWT (HS256, signed with `SESSION_SECRET`)
@@ -64,14 +49,32 @@ user came through.
   exactly as clients consume it in the wild.
 </Info>
 
-## Roles
+## Roles — managed in Descope
 
-Two roles exist today:
+Docs roles come from **Descope role claims**, so access is administered in
+the Descope console, not in code:
 
-- **member** — sees all standard documentation.
-- **admin** — additionally sees groups marked `"access": "admin"` in
-  `docs.json` (try the **Admin** section in the sidebar while signed in as an
-  admin, then sign in with a member account and watch it disappear).
+<Steps>
+  <Step title="Define roles in Descope">
+    Console → **Authorization → Roles** — create (or reuse) a role such as
+    `docs-admin`.
+  </Step>
+  <Step title="Assign roles to users">
+    Console → **Users** → select a user → assign the role. Changes apply on
+    the user's next sign-in.
+  </Step>
+  <Step title="Map Descope roles to docs roles">
+    Any Descope role listed in `DESCOPE_ADMIN_ROLES` (default
+    `admin, docs-admin`) grants the docs **admin** role; everyone else who
+    can sign in is a **member**. `DESCOPE_ADMIN_EMAILS` force-grants admin to
+    specific emails regardless of roles, and `DESCOPE_ROLES_CLAIM` points at
+    a differently-named claim if your tenant customizes it.
+  </Step>
+</Steps>
+
+The role is embedded in the signed docs session at sign-in, then enforced in
+three places: admin-only sidebar groups, direct URLs (members get a 404),
+and search results (filtered server-side).
 
 Role checks apply in three places: sidebar rendering, page access (non-listed
 roles get a 404, not a 403 — the page's existence isn't leaked), and search

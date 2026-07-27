@@ -13,7 +13,14 @@ export interface SessionUser {
 }
 
 export function getSecret(): Uint8Array {
-  const secret = process.env.SESSION_SECRET ?? 'smilify-dev-secret-change-me-in-production';
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    // A predictable signing secret would let anyone forge sessions.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SESSION_SECRET must be set in production (openssl rand -hex 32)');
+    }
+    return new TextEncoder().encode('smilify-dev-secret-not-for-production');
+  }
   return new TextEncoder().encode(secret);
 }
 

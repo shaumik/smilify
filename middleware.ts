@@ -11,7 +11,6 @@ import { hasAgentToken } from './lib/agent-auth';
 // .md, the MCP endpoint, and search.
 const PUBLIC_PATHS = [
   /^\/login$/,
-  /^\/api\/auth\/login$/,
   /^\/api\/auth\/descope\/token$/,
   /^\/api\/v1(\/|$)/,
 ];
