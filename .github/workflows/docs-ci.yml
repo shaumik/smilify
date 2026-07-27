@@ -1,0 +1,62 @@
+name: Docs CI & preview
+
+on:
+  pull_request:
+
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Link check
+        run: node scripts/check-links.mjs
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload preview build
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-preview-${{ github.event.pull_request.number }}
+          path: |
+            .next
+            public
+            content
+            docs.json
+            openapi
+          retention-days: 7
+
+      # Preview deployment: POST the internal deploy hook with the PR ref.
+      # Configure PREVIEW_DEPLOY_HOOK (repo secret) to point at the internal
+      # deployer; it should build/serve this ref at pr-<number>.docs.internal.
+      - name: Trigger preview deploy
+        if: ${{ vars.PREVIEW_ENABLED == 'true' }}
+        env:
+          HOOK: ${{ secrets.PREVIEW_DEPLOY_HOOK }}
+        run: |
+          curl -fsS -X POST "$HOOK" \
+            -H 'content-type: application/json' \
+            -d "{\"repo\": \"${{ github.repository }}\", \"ref\": \"${{ github.head_ref }}\", \"pr\": ${{ github.event.pull_request.number }}}"
+
+      - name: Comment preview link
+        if: ${{ vars.PREVIEW_ENABLED == 'true' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+            const body = `📖 Docs preview: https://pr-${pr}.docs.internal (build artifact also attached to this run)`;
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo, issue_number: pr,
+            });
+            if (!comments.some(c => c.body?.startsWith('📖 Docs preview:'))) {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: pr, body });
+            }

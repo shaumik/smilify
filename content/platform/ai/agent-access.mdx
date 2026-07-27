@@ -1,0 +1,54 @@
+---
+title: Agent access
+description: llms.txt, raw markdown, MCP, and token auth for AI agents
+icon: sparkles
+---
+
+Every page on this site is consumable by AI agents, in the format agents
+prefer — while staying behind authentication.
+
+## Token auth for agents
+
+Agents can't hold a browser session, so the machine-readable surfaces accept a
+bearer token instead:
+
+```bash
+curl https://docs.internal/llms.txt \
+  -H "Authorization: Bearer $DOCS_AGENT_TOKEN"
+```
+
+Set the token via the `DOCS_AGENT_TOKEN` environment variable. Token requests
+act as the **member** role by default (no admin content); set
+`DOCS_AGENT_ROLE=admin` to widen it.
+
+## The agent surfaces
+
+| Surface | What it returns |
+| --- | --- |
+| `/llms.txt` | Index of every page with descriptions and `.md` links |
+| `/llms-full.txt` | The entire docs set as one markdown document |
+| `/<slug>.md` | Any page as raw markdown, e.g. [`/quickstart.md`](/quickstart.md) |
+| `POST /api/mcp` | MCP server: `search_docs`, `read_page`, `list_pages` |
+| `GET /api/search?q=` | JSON search results |
+
+All of them are role-filtered — the same access rules as the website.
+
+## Connecting an MCP client
+
+The docs are an MCP server over Streamable HTTP. For Claude Code:
+
+```bash
+claude mcp add smilify-docs https://docs.internal/api/mcp \
+  --transport http \
+  --header "Authorization: Bearer $DOCS_AGENT_TOKEN"
+```
+
+Any MCP-capable client (Cursor, Windsurf, custom agents) works the same way:
+point it at `/api/mcp` with the bearer header. Agents can then search the
+docs, list pages, and read full content natively.
+
+## Traffic visibility
+
+Requests to these surfaces are classified (human / AI agent / script) and
+logged — admins can see which agents read what on the
+[analytics dashboard](/admin/analytics).

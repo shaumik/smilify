@@ -1,0 +1,44 @@
+---
+title: Docs agent
+description: Self-updating documentation via Claude Code in CI
+icon: bolt
+---
+
+Because docs are git-native, keeping them updated is a CI job: on every merge
+to `main`, a Claude Code agent reviews the diff and opens a PR updating any
+affected documentation.
+
+## The workflow
+
+`.github/workflows/docs-agent.yml` runs on merges that touch source code:
+
+```yaml title=".github/workflows/docs-agent.yml (core)"
+- uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: |
+      Review the latest merged diff. If it changes behavior documented in
+      content/ or openapi/, update those docs to match. Open a PR titled
+      "docs: sync with <commit>" — never push to main directly.
+```
+
+The agent proposes; humans review the PR like any other change. Nothing lands
+without approval.
+
+## Using it with the product repo
+
+This is the piece you copy into the product repository: point the prompt at
+its docs (or at this repo via a checkout step), add `ANTHROPIC_API_KEY` to
+the repo secrets, and every merge keeps documentation in sync.
+
+<Warning>
+  The workflow requires the `ANTHROPIC_API_KEY` repository secret and GitHub
+  Actions enabled. It is inert until both are configured — validate it on the
+  first real merge.
+</Warning>
+
+## What's self-updating today without the agent
+
+The API reference already regenerates from `openapi/openapi.json` on every
+request — spec changes are live instantly with zero doc edits. The docs agent
+extends that property to prose.

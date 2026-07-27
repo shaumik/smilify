@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Icon from '../Icon';
 import CodeBlock from './CodeBlock';
 import CodeGroup from './CodeGroup';
+import Snippet from './Snippet';
 import { Tabs, Tab } from './Tabs';
 
 // ---- Callouts ----------------------------------------------------------
@@ -322,4 +323,5 @@ export const mdxComponents = {
   Tabs,
   Tab,
   CodeGroup,
+  Snippet,
 };

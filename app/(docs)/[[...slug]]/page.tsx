@@ -1,11 +1,10 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { compileMDX } from 'next-mdx-remote/rsc';
-import remarkGfm from 'remark-gfm';
-import rehypeSlug from 'rehype-slug';
-import rehypePrettyCode from 'rehype-pretty-code';
+import { compileDocMDX } from '@/lib/mdx';
+import { cookies } from 'next/headers';
 import { getSessionUser } from '@/lib/auth';
-import { canAccessPage, getConfig } from '@/lib/config';
+import { canAccessPage, getConfig, getVersions } from '@/lib/config';
+import { logEvent } from '@/lib/analytics';
 import { extractToc, getPage, getPager } from '@/lib/content';
 import { mdxComponents } from '@/components/mdx';
 import Toc from '@/components/Toc';
@@ -14,12 +13,6 @@ import PageFooter from '@/components/PageFooter';
 import ApiPage from '@/components/api/ApiPage';
 
 export const dynamic = 'force-dynamic';
-
-const prettyCodeOptions = {
-  theme: { dark: 'github-dark-default', light: 'github-light-default' },
-  keepBackground: false,
-  defaultLang: 'txt',
-};
 
 function slugFromParams(params: { slug?: string[] }): string {
   return params.slug?.join('/') ?? 'introduction';
@@ -45,8 +38,17 @@ export default async function DocPage({ params }: { params: { slug?: string[] } 
   const page = getPage(slug);
   // Hide pages that don't exist or that this role may not see.
   if (!page || !canAccessPage(slug, user.role)) notFound();
+  logEvent({ type: 'page_view', path: `/${slug}`, actor: user.email, agent: 'human' });
 
-  const pager = getPager(slug, user.role);
+  const versions = getVersions();
+  const cookieVersion = cookies().get('smilify_version')?.value;
+  const version =
+    versions.length > 0
+      ? versions.includes(cookieVersion ?? '')
+        ? cookieVersion
+        : versions[0]
+      : undefined;
+  const pager = getPager(slug, user.role, version);
 
   // API reference pages delegate to the OpenAPI renderer.
   if (page.frontmatter.openapi) {
@@ -62,16 +64,7 @@ export default async function DocPage({ params }: { params: { slug?: string[] } 
   }
 
   const toc = extractToc(page.content);
-  const { content } = await compileMDX({
-    source: page.content,
-    components: mdxComponents,
-    options: {
-      mdxOptions: {
-        remarkPlugins: [remarkGfm],
-        rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCodeOptions] as any],
-      },
-    },
-  });
+  const content = await compileDocMDX(page.content);
 
   const feedback = getConfig().feedback?.thumbsRating !== false;
 

@@ -1,0 +1,39 @@
+---
+title: AI assistant
+description: Ask AI answers questions grounded in the docs, with citations
+icon: sparkles
+---
+
+The **Ask AI** button in the top bar opens an assistant that answers
+questions using only this documentation.
+
+## How it works
+
+<Steps>
+  <Step title="Search grounding">
+    Your question runs through the same role-filtered search index as ⌘K —
+    the assistant only ever sees pages you're allowed to read.
+  </Step>
+  <Step title="Claude answers with citations">
+    The top matching pages are passed to Claude, which answers from that
+    context and cites pages inline. Citations render as links.
+  </Step>
+  <Step title="Sources listed">
+    Every answer ends with the source pages it drew from.
+  </Step>
+</Steps>
+
+## Configuration
+
+```bash title=".env"
+ANTHROPIC_API_KEY=sk-ant-...      # enables the assistant
+#ASSISTANT_MODEL=claude-opus-5    # default
+```
+
+If a request is declined by the model's safety systems, the platform's
+server-side fallback re-runs it on a fallback model automatically.
+
+<Note>
+  Without `ANTHROPIC_API_KEY` the Ask AI dialog explains that the assistant
+  isn't configured — nothing else on the platform depends on it.
+</Note>

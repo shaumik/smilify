@@ -3,7 +3,7 @@
 Our self-hosted documentation platform — the internal replacement for Mintlify.
 Built, verified end-to-end, and live on `main`.
 
-`Next.js 14 · TypeScript` · `26 doc pages · 5 API endpoints` · `Descope SSO` · `100% self-hosted`
+`Next.js 14 · TypeScript` · `34 doc pages · 5 API endpoints` · `Descope SSO` · `Agent-native (llms.txt · .md · MCP)` · `100% self-hosted`
 
 ## What we built
 
@@ -88,9 +88,10 @@ flowchart LR
 
 ## Mintlify parity matrix
 
-Also lives in the product at `/platform/mintlify-parity`. Summary: core
-platform and auth are at or beyond parity — and self-hosted, which Mintlify
-can't offer. The AI layer is the open gap.
+Also lives in the product at `/platform/mintlify-parity`. Summary: at or
+beyond parity across authoring, API reference, AI/agents, and auth — and
+self-hosted, which Mintlify can't offer. Remaining gaps: WYSIWYG web editor,
+translations, AsyncAPI.
 
 **✅ built · 🟡 partial · ❌ not built**
 
@@ -100,10 +101,10 @@ can't offer. The AI layer is the open gap.
 | --- | --- | --- |
 | MDX pages + frontmatter | ✅ | `content/**/*.mdx` |
 | `docs.json` config (tabs, groups, colors, navbar, footer) | ✅ | Same schema shape — near copy-paste migration |
-| Nav anchors / dropdowns / deep nesting | 🟡 | Tabs + groups today |
+| Nav anchors, nested groups, version dropdown | ✅ | Global anchors, recursive sub-groups, versioning |
 | Component library | ✅ | Callouts, cards, tabs, accordions, steps, fields, frames, updates, tooltips |
 | Code blocks (highlighting, titles, line marks, copy, groups) | ✅ | Shiki, dual themes |
-| Reusable snippets | ❌ | MDX include mechanism |
+| Reusable snippets | ✅ | `<Snippet file="…" />` from `content/snippets/` |
 
 ### Site experience
 
@@ -119,28 +120,27 @@ can't offer. The AI layer is the open gap.
 | --- | --- | --- |
 | OpenAPI-generated reference pages | ✅ | One frontmatter line per endpoint |
 | Interactive playground | ✅ | Live requests against `/api/v1` |
-| Generated code samples | 🟡 | cURL / Python / JS; Mintlify ships more languages |
+| Generated code samples | ✅ | cURL, Python, JavaScript, TypeScript, Go, Rust |
 | AsyncAPI | ❌ | |
 
 ### AI & agents
 
 | Mintlify feature | Status | Notes |
 | --- | --- | --- |
-| `llms.txt` | ✅ | Role-aware, auth-walled |
-| `llms-full.txt` | ❌ | Hours of work |
-| Raw-Markdown serving for agents | ❌ | Easy (`.md` routes) |
-| Auto-generated MCP server | ❌ | ~1 day: search + fetch tools over content |
-| Embedded AI assistant with citations | ❌ | 1–2 days on internal Claude API |
-| Docs agent proposing updates ("self-updating") | ❌ | See verdict below |
-| AI traffic analytics | ❌ | |
+| `llms.txt` / `llms-full.txt` | ✅ | Role-aware; agent bearer-token auth |
+| Raw-Markdown serving for agents | ✅ | Any page at `/<slug>.md` |
+| Auto-generated MCP server | ✅ | `POST /api/mcp`: search_docs, read_page, list_pages |
+| Embedded AI assistant with citations | ✅ | Ask AI — Claude-backed, search-grounded (`ANTHROPIC_API_KEY`) |
+| Docs agent proposing updates ("self-updating") | ✅ | Claude Code in CI opens doc-sync PRs on merge |
+| AI traffic analytics | ✅ | Agent-classified logging + admin dashboard |
 
 ### Editing & workflow
 
 | Mintlify feature | Status | Notes |
 | --- | --- | --- |
 | Docs-as-code (git-native) | ✅ | Arguably stronger — the site *is* the repo |
-| WYSIWYG web editor | ❌ | Largest gap for non-technical editors |
-| Preview deployments per PR | ❌ | Straightforward CI work |
+| WYSIWYG web editor | ❌ | The one remaining gap for non-technical editors |
+| Preview deployments per PR | ✅ | CI: build + link check + preview deploy hook + PR comment |
 
 ### Enterprise
 
@@ -149,22 +149,20 @@ can't offer. The AI layer is the open gap.
 | Authentication | ✅ | Beyond parity: every route auth-walled, self-hosted, Descope SSO |
 | Partial auth (public + private mix) | 🟡 | Role-gating yes; no anonymous tier |
 | Personalization (per-user API keys) | 🟡 | Role-based content yes; playground key static |
-| Versioning | ❌ | |
+| Versioning | ✅ | Version dropdown filtering navigation |
 | Localization / translations | ❌ | |
-| Analytics dashboard | ❌ | Feedback captured as JSONL |
+| Analytics dashboard | ✅ | `/admin/analytics`: traffic, searches, agents, feedback |
 
-## The verdict on "self-updating documentation for agents"
+## "Self-updating documentation for agents" — now true
 
-- **"Agents build on it" — half true today.** Docs are plain MDX in git (any
-  coding agent can read and edit them — it's how this platform was built)
-  plus a role-aware `llms.txt`. The rest of the agent-readiness layer —
-  `llms-full.txt`, raw Markdown serving, MCP server, embedded assistant — is
-  a 2–4 day roadmap, not built yet.
-- **"Self-updating" — true for the API reference only.** It regenerates from
-  the OpenAPI spec on every request: spec changes are live instantly with
-  zero doc edits. Prose does not update itself. The credible path: a CI job
-  running a coding agent on merge to draft doc-update PRs — the git-native
-  design is already the right shape for it.
+- **Agents build on it.** Role-aware `llms.txt` + `llms-full.txt`, every page
+  as raw markdown at `/<slug>.md`, an MCP server at `/api/mcp`, bearer-token
+  auth for agents (`DOCS_AGENT_TOKEN`), and an embedded Ask AI assistant.
+- **Self-updating.** The API reference regenerates from the OpenAPI spec on
+  every request, and `.github/workflows/docs-agent.yml` runs Claude Code on
+  each merge to propose doc-sync PRs for prose. Humans approve every change.
+  (CI workflows exercise only in GitHub Actions with repo secrets set —
+  validate on the first real merge.)
 
 ## Running it
 

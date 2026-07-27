@@ -20,6 +20,8 @@ export interface DocPage {
 }
 
 export function pageFilePath(slug: string): string | null {
+  // snippets/ holds reusable fragments, not routable pages
+  if (slug.startsWith('snippets/')) return null;
   const safe = slug.replace(/\.+/g, '.');
   const candidate = path.join(CONTENT_DIR, `${safe}.mdx`);
   if (!candidate.startsWith(CONTENT_DIR)) return null;
@@ -55,8 +57,12 @@ export interface PagerLink {
 }
 
 /** Previous/next links within the role's visible navigation order. */
-export function getPager(slug: string, role: Role): { prev: PagerLink | null; next: PagerLink | null } {
-  const ordered = getOrderedPages(role);
+export function getPager(
+  slug: string,
+  role: Role,
+  version?: string
+): { prev: PagerLink | null; next: PagerLink | null } {
+  const ordered = getOrderedPages(role, version);
   const idx = ordered.findIndex((p) => p.slug === slug);
   if (idx === -1) return { prev: null, next: null };
   const titleOf = (s: string) => getPage(s)?.frontmatter.title ?? s.split('/').pop() ?? s;
