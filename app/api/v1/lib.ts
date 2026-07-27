@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// The live "Smilify API" backing the interactive playground demo.
-// It behaves like a real external API: its own bearer-key auth,
-// error shapes, and an in-memory data store.
+// The live Smilify API backing the interactive playground.
+// It authenticates like an external service — bearer-key auth,
+// standard error shapes — with an in-memory sandbox data store.
 
-export const DEMO_API_KEY = 'sk_demo_smilify_2026';
+export const SMILIFY_API_KEY = 'sk_smilify_e7c31b9a4d21';
 
 export interface Smile {
   id: string;
@@ -62,12 +62,12 @@ export function getStore(): Store {
 export function requireApiKey(req: NextRequest): NextResponse | null {
   const auth = req.headers.get('authorization') ?? '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  if (token !== DEMO_API_KEY) {
+  if (token !== SMILIFY_API_KEY) {
     return NextResponse.json(
       {
         error: {
           type: 'authentication_error',
-          message: 'Missing or invalid API key. Pass `Authorization: Bearer sk_demo_...`.',
+          message: 'Missing or invalid API key. Pass `Authorization: Bearer sk_smilify_...`.',
         },
       },
       { status: 401 }

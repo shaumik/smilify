@@ -35,12 +35,12 @@ Every route on this site — pages, search, the API playground proxy, even
 | Search API | `401` |
 | Feedback API | `401` |
 | `llms.txt` | `401` |
-| Demo Smilify API (`/api/demo/*`) | Own bearer-key auth, like a real external API |
+| Smilify API (`/api/v1/*`) | Own bearer-key auth, like any product API |
 
 <Info>
-  The demo Smilify API is deliberately outside the session wall so the API
-  playground behaves like calling a real service: it wants an
-  `Authorization: Bearer` key, not your docs cookie.
+  The Smilify API is deliberately outside the docs session wall — it
+  authenticates with an `Authorization: Bearer` key, not your docs cookie,
+  exactly as clients consume it in the wild.
 </Info>
 
 ## Roles
@@ -50,7 +50,7 @@ Two roles exist today:
 - **member** — sees all standard documentation.
 - **admin** — additionally sees groups marked `"access": "admin"` in
   `docs.json` (try the **Admin** section in the sidebar while signed in as an
-  admin, then sign in as `docs@smilify.dev` and watch it disappear).
+  admin, then sign in with a member account and watch it disappear).
 
 Role checks apply in three places: sidebar rendering, page access (non-listed
 roles get a 404, not a 403 — the page's existence isn't leaked), and search

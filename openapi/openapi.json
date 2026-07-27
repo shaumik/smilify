@@ -5,7 +5,7 @@
     "description": "Track and share smiles across your team.",
     "version": "1.0.0"
   },
-  "servers": [{ "url": "/api/demo/v1" }],
+  "servers": [{ "url": "/api/v1" }],
   "security": [{ "bearerAuth": [] }],
   "paths": {
     "/smiles": {

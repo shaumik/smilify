@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getStore, notFound, requireApiKey } from '../../../lib';
+import { getStore, notFound, requireApiKey } from '../../lib';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const denied = requireApiKey(req);

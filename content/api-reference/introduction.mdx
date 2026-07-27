@@ -6,30 +6,31 @@ icon: terminal
 
 The pages in this tab are **generated from `openapi/openapi.json`**. Each
 endpoint page includes parameter and response documentation, code samples in
-three languages, and an interactive **Try it** playground that hits a live
-demo API.
+three languages, and an interactive **Try it** playground that sends real
+requests to the API.
 
 ## Base URL
 
 ```text
-/api/demo/v1
+/api/v1
 ```
 
-The demo API runs inside this app so the playground works out of the box, but
-it authenticates like a real external service.
+The playground calls the live sandbox environment, seeded with sample data
+that resets on restart.
 
 ## Authentication
 
 All endpoints require a bearer key:
 
 ```bash
-curl "/api/demo/v1/smiles" \
-  -H "Authorization: Bearer sk_demo_smilify_2026"
+curl "/api/v1/smiles" \
+  -H "Authorization: Bearer $SMILIFY_API_KEY"
 ```
 
 <Tip>
-  The playground pre-fills the demo key `sk_demo_smilify_2026`. Clear it and
-  send a request to see the real `401` error shape.
+  The playground is pre-provisioned with this workspace's sandbox key, so you
+  can hit **Send** on any endpoint immediately. Clear the key and send to see
+  the `401` error shape.
 </Tip>
 
 ## Adding endpoints

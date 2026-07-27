@@ -1,35 +1,50 @@
 # Smilify Docs
 
-A **self-hosted internal documentation platform** — our in-house replacement
-for Mintlify. Next.js 14, MDX content, `docs.json` navigation, OpenAPI-driven
-API reference with a live playground, full-text search, dark mode, and
-authentication on every route.
+Our **self-hosted documentation platform** — the in-house replacement for
+Mintlify, dogfooding its own docs. Next.js 14, MDX content, `docs.json`
+navigation, OpenAPI-driven API reference with a live playground, full-text
+search, dark mode, and authentication on every route.
 
-## Demo
+## Running
 
 ```bash
 npm install
 npm run dev        # http://localhost:3000
 ```
 
-You'll be redirected to the sign-in page. Demo accounts:
+Production:
 
-| Account | Password | Role |
-| --- | --- | --- |
-| `admin@smilify.dev` | `SmilifyAdmin!2026` | admin — sees the Admin sidebar group |
-| `docs@smilify.dev` | `SmilifyDocs!2026` | member — Admin content hidden everywhere |
+```bash
+SESSION_SECRET=$(openssl rand -hex 32) npm run build && npm start
+```
 
-Things to try in the demo:
+## Accounts
 
-1. **Auth**: open any URL signed out → redirected to `/login`. APIs return 401.
-2. **Roles**: sign in as each user and compare the sidebar, search results for
-   "deployment", and direct navigation to `/admin/deployment` (member → 404).
-3. **Search**: press `⌘K` / `Ctrl+K`, fuzzy-typo a query, arrow-key navigate.
-4. **API playground**: API Reference tab → *Create a smile* → **Send** — the
-   request hits the live in-app demo API. Clear the API key for a real 401.
-5. **Dark mode**: toggle in the top bar; code blocks switch Shiki themes.
-6. **Components**: the *Components* sidebar group renders every MDX component.
-7. **llms.txt**: visit `/llms.txt` for the generated LLM index.
+Accounts are managed in `lib/auth.ts` (scrypt-hashed; designed to be swapped
+for SSO/OIDC — see `/authentication` in the app). Current directory:
+
+| Account | Role |
+| --- | --- |
+| `shaumik@echelonai.com` | admin |
+| `guest@echelonai.com` | member |
+
+Initial passwords were shared out-of-band; rotate by regenerating the hash
+(see the in-app admin page `/admin/user-management`).
+
+## Live demo script
+
+1. **Auth wall** — open any deep link signed out → redirect to `/login`;
+   `curl /api/search` → 401. Sign in; you land back on the page you wanted.
+2. **The platform itself** — sidebar tabs/groups from `docs.json`, ⌘K search
+   (typo-tolerant), dark mode toggle, TOC scroll-spy, prev/next.
+3. **Components** — the *Components* sidebar group renders the full MDX
+   library: callouts, cards, tabs, accordions, steps, code groups.
+4. **API Reference** — *Create a smile* → **Send**: a real request hits the
+   live API at `/api/v1` and returns a `201`. Clear the API key → real `401`.
+5. **Roles** — sign out, sign in as `guest@echelonai.com`: the Admin sidebar
+   group is gone, `/admin/deployment` 404s, and searching "deployment"
+   returns no admin pages (filtered server-side).
+6. **llms.txt** — visit `/llms.txt`: the generated, role-aware LLM index.
 
 ## Feature parity with Mintlify
 
@@ -54,21 +69,15 @@ content/               MDX documentation pages
 openapi/openapi.json   Spec that generates the API Reference tab
 middleware.ts          Session guard on every route
 lib/                   Config, content, auth, search, OpenAPI parsing
-app/                   Next.js App Router: pages, auth APIs, demo API, llms.txt
+app/                   Next.js App Router: pages, auth APIs, Smilify API, llms.txt
 components/            Shell UI + MDX component library + playground
 ```
 
 - **Sessions** are HS256 JWTs in an HTTP-only cookie, signed with
-  `SESSION_SECRET` (set this in production: `openssl rand -hex 32`).
-- **Passwords** are scrypt-hashed with per-user salts (demo store in
-  `lib/auth.ts`; designed to be swapped for SSO/OIDC).
-- **The demo Smilify API** (`/api/demo/v1/*`) is a real in-app API with its own
-  bearer-key auth (`sk_demo_smilify_2026`) so the playground demo is honest.
-
-## Production
-
-```bash
-SESSION_SECRET=$(openssl rand -hex 32) npm run build && npm start
-```
-
-See the in-app admin-only page `/admin/deployment` for the full checklist.
+  `SESSION_SECRET` (always set it in production).
+- **Passwords** are scrypt-hashed with per-user salts and constant-time
+  comparison.
+- **The Smilify API** (`/api/v1/*`) serves the playground from an in-app
+  sandbox with real bearer-key auth, so the API Reference tab demos against
+  live requests. Point `openapi/openapi.json` at the production spec and the
+  reference pages regenerate automatically.

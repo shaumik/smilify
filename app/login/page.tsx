@@ -21,11 +21,6 @@ export default async function LoginPage() {
         <Suspense>
           <LoginForm />
         </Suspense>
-        <div className="login-demo-hint">
-          <strong>Demo accounts</strong>
-          <code>admin@smilify.dev / SmilifyAdmin!2026</code>
-          <code>docs@smilify.dev / SmilifyDocs!2026</code>
-        </div>
       </div>
     </div>
   );
