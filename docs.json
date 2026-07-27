@@ -90,6 +90,14 @@
             "pages": ["api-reference/sentiment/analyze"]
           },
           {
+            "group": "Events",
+            "pages": [
+              "api-reference/events/overview",
+              "api-reference/events/smile-events",
+              "api-reference/events/sentiment-scored"
+            ]
+          },
+          {
             "group": "Legacy",
             "version": "v1",
             "pages": ["api-reference/legacy/overview"]
@@ -120,6 +128,7 @@
   },
   "api": {
     "openapi": "openapi/openapi.json",
+    "asyncapi": "asyncapi/asyncapi.json",
     "playground": { "display": "interactive" }
   },
   "feedback": {

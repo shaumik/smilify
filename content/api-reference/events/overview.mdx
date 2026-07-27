@@ -1,0 +1,39 @@
+---
+title: Events
+description: Real-time Smilify events over WebSocket, documented from AsyncAPI
+icon: bolt
+---
+
+Alongside the REST API, Smilify emits real-time events. The pages in this
+group are **generated from `asyncapi/asyncapi.json`** the same way REST pages
+are generated from OpenAPI — an event page is just frontmatter:
+
+```mdx title="content/api-reference/events/smile-events.mdx"
+---
+title: Smile events
+asyncapi: receive smileEvents
+---
+```
+
+## Connecting
+
+Events are delivered over an authenticated WebSocket:
+
+```js
+const ws = new WebSocket(
+  "wss://docs.internal/api/v1/events?channel=smiles.events",
+  { headers: { Authorization: `Bearer ${API_KEY}` } }
+);
+```
+
+Every message is JSON with an `event` discriminator, a `data` payload, and an
+`emitted_at` timestamp — full payload schemas on each channel page.
+
+<CardGroup cols={2}>
+  <Card title="Smile events" icon="smile" href="/api-reference/events/smile-events">
+    smile.created and smile.deleted.
+  </Card>
+  <Card title="Sentiment scored" icon="sparkles" href="/api-reference/events/sentiment-scored">
+    Async sentiment results.
+  </Card>
+</CardGroup>

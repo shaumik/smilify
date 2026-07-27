@@ -11,6 +11,7 @@ import Toc from '@/components/Toc';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import PageFooter from '@/components/PageFooter';
 import ApiPage from '@/components/api/ApiPage';
+import AsyncApiPage from '@/components/api/AsyncApiPage';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,19 @@ export default async function DocPage({ params }: { params: { slug?: string[] } 
         : versions[0]
       : undefined;
   const pager = getPager(slug, user.role, version);
+
+  // Event reference pages delegate to the AsyncAPI renderer.
+  if (page.frontmatter.asyncapi) {
+    return (
+      <AsyncApiPage
+        slug={slug}
+        asyncapiRef={page.frontmatter.asyncapi}
+        frontmatter={page.frontmatter}
+        intro={page.content}
+        pager={pager}
+      />
+    );
+  }
 
   // API reference pages delegate to the OpenAPI renderer.
   if (page.frontmatter.openapi) {

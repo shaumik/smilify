@@ -373,6 +373,16 @@ a:hover { text-decoration: underline; }
 .method-put, .method-patch { background: #d97706; }
 .method-delete { background: #dc2626; }
 
+.proto-chip {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  text-transform: uppercase;
+}
+
 /* ===== Prose ===== */
 .prose { margin-top: 28px; }
 .prose > :first-child { margin-top: 0; }

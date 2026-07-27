@@ -1,0 +1,116 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Smilify Events",
+    "version": "1.0.0",
+    "description": "Real-time Smilify events over WebSocket."
+  },
+  "servers": {
+    "production": {
+      "host": "docs.internal",
+      "pathname": "/api/v1/events",
+      "protocol": "wss",
+      "description": "Authenticated WebSocket endpoint. Pass the API key as a `token` query parameter or `Authorization` header during the upgrade request."
+    }
+  },
+  "channels": {
+    "smileEvents": {
+      "address": "smiles.events",
+      "description": "Emitted whenever a smile is created or deleted.",
+      "messages": {
+        "smileCreated": { "$ref": "#/components/messages/smileCreated" },
+        "smileDeleted": { "$ref": "#/components/messages/smileDeleted" }
+      }
+    },
+    "sentimentScored": {
+      "address": "sentiment.scored",
+      "description": "Emitted when a sentiment analysis completes.",
+      "messages": {
+        "sentimentScored": { "$ref": "#/components/messages/sentimentScored" }
+      }
+    }
+  },
+  "operations": {
+    "onSmileEvents": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/smileEvents" },
+      "summary": "Subscribe to smile events",
+      "description": "Receive a message every time a smile is created or deleted anywhere in the workspace."
+    },
+    "onSentimentScored": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/sentimentScored" },
+      "summary": "Subscribe to sentiment results",
+      "description": "Receive scored sentiment results as they complete, including whether the text was judged smile-worthy."
+    }
+  },
+  "components": {
+    "messages": {
+      "smileCreated": {
+        "name": "smile.created",
+        "title": "Smile created",
+        "summary": "A new smile was recorded.",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "event": { "type": "string", "const": "smile.created", "description": "Event type discriminator.", "example": "smile.created" },
+            "data": { "$ref": "#/components/schemas/Smile" },
+            "emitted_at": { "type": "string", "format": "date-time", "description": "When the event was emitted." }
+          }
+        }
+      },
+      "smileDeleted": {
+        "name": "smile.deleted",
+        "title": "Smile deleted",
+        "summary": "A smile was permanently removed.",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "event": { "type": "string", "const": "smile.deleted", "example": "smile.deleted" },
+            "data": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "description": "The deleted smile ID.", "example": "smile_001" }
+              }
+            },
+            "emitted_at": { "type": "string", "format": "date-time" }
+          }
+        }
+      },
+      "sentimentScored": {
+        "name": "sentiment.scored",
+        "title": "Sentiment scored",
+        "summary": "A sentiment analysis completed.",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "event": { "type": "string", "const": "sentiment.scored", "example": "sentiment.scored" },
+            "data": {
+              "type": "object",
+              "properties": {
+                "text": { "type": "string", "description": "The analyzed text.", "example": "I love this launch!" },
+                "sentiment": { "type": "string", "enum": ["positive", "neutral", "negative"], "description": "Overall label.", "example": "positive" },
+                "score": { "type": "number", "description": "-1 to 1.", "example": 0.87 },
+                "smile_worthy": { "type": "boolean", "example": true }
+              }
+            },
+            "emitted_at": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Smile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Unique smile identifier.", "example": "smile_004" },
+          "emoji": { "type": "string", "description": "The smile's emoji.", "example": "😄" },
+          "mood": { "type": "string", "enum": ["joyful", "grateful", "proud", "calm"], "description": "The mood of the smile.", "example": "proud" },
+          "message": { "type": "string", "description": "What made this person smile.", "example": "Events API shipped!" },
+          "author": { "type": "string", "example": "shaumik@echelonai.com" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}
