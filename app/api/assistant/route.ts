@@ -4,6 +4,7 @@ import { getSessionUser } from '@/lib/auth';
 import { search } from '@/lib/search';
 import { getPage } from '@/lib/content';
 import { getConfig } from '@/lib/config';
+import { getSite } from '@/lib/sites';
 import { classifyAgent, logEvent } from '@/lib/analytics';
 
 // Ask AI: search-grounded docs assistant with citations.
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
       { status: 503 }
     );
   }
-  let body: { question?: string };
+  let body: { question?: string; site?: string };
   try {
     body = await req.json();
   } catch {
@@ -36,6 +37,8 @@ export async function POST(req: NextRequest) {
   }
   const question = body.question?.trim();
   if (!question) return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+  const site = body.site?.trim() || 'docs';
+  if (!getSite(site)) return NextResponse.json({ error: 'unknown_site' }, { status: 404 });
 
   logEvent({
     type: 'assistant',
@@ -45,9 +48,9 @@ export async function POST(req: NextRequest) {
   });
 
   // Ground the answer in the pages this user's role is allowed to see.
-  const hits = search(question, user.role, 6);
+  const hits = search(site, question, user.role, 6);
   const sources = hits.map((h) => {
-    const page = getPage(h.slug);
+    const page = getPage(site, h.slug);
     return {
       slug: h.slug,
       title: h.title,
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
       output_config: { effort: 'low' },
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
-      system: `You are the documentation assistant for ${getConfig().name}, an internal docs platform. Answer questions using ONLY the documentation pages provided. Cite pages inline using their slug in square brackets, e.g. [quickstart] or [api-reference/introduction]. If the docs don't cover the question, say so plainly and suggest the closest relevant page. Keep answers focused and concise.`,
+      system: `You are the documentation assistant for ${getConfig(site).name}, an internal docs platform. Answer questions using ONLY the documentation pages provided. Cite pages inline using their slug in square brackets, e.g. [quickstart] or [api-reference/introduction]. If the docs don't cover the question, say so plainly and suggest the closest relevant page. Keep answers focused and concise.`,
       messages: [
         {
           role: 'user',

@@ -7,7 +7,7 @@ import Icon from './Icon';
 import ThemeToggle from './ThemeToggle';
 import SearchModal from './SearchModal';
 import AskAI from './AskAI';
-import type { NavGroupData, NavPageData, NavTabData } from '@/app/(docs)/layout';
+import type { NavGroupData, NavPageData, NavTabData } from '@/app/(docs)/[site]/layout';
 
 interface User {
   email: string;
@@ -30,8 +30,8 @@ function firstSlug(items: (NavPageData | NavGroupData)[]): string {
   return '';
 }
 
-function activeTabOf(nav: NavTabData[], pathname: string): string {
-  const slug = pathname.replace(/^\//, '') || 'introduction';
+function activeTabOf(nav: NavTabData[], pathname: string, site: string): string {
+  const slug = pathname.replace(new RegExp(`^/${site}/?`), '') || 'introduction';
   for (const tab of nav) {
     if (tab.groups.some((g) => containsSlug(g.items, slug))) return tab.tab;
   }
@@ -40,6 +40,8 @@ function activeTabOf(nav: NavTabData[], pathname: string): string {
 
 export default function Topbar({
   name,
+  site,
+  sites,
   nav,
   links,
   user,
@@ -47,6 +49,8 @@ export default function Topbar({
   version,
 }: {
   name: string;
+  site: string;
+  sites: { slug: string; name: string }[];
   nav: NavTabData[];
   links: { label: string; href: string }[];
   user: User;
@@ -58,7 +62,7 @@ export default function Topbar({
   const [searchOpen, setSearchOpen] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const activeTab = activeTabOf(nav, pathname);
+  const activeTab = activeTabOf(nav, pathname, site);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -99,10 +103,24 @@ export default function Topbar({
         <button className="mobile-menu-btn" onClick={toggleSidebar} aria-label="Toggle navigation">
           <Icon name="menu" size={20} />
         </button>
-        <Link href="/" className="topbar-brand">
+        <Link href={`/${site}`} className="topbar-brand">
           <img src="/logo.svg" alt="" width={26} height={26} />
           <span>{name}</span>
         </Link>
+        {sites.length > 1 && (
+          <select
+            className="version-select site-select"
+            value={site}
+            onChange={(e) => router.push(`/${e.target.value}`)}
+            aria-label="Documentation site"
+          >
+            {sites.map((s) => (
+              <option key={s.slug} value={s.slug}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        )}
         {versions.length > 0 && (
           <select
             className="version-select"
@@ -145,6 +163,11 @@ export default function Topbar({
                 <span>{user.email}</span>
                 <span className={`role-badge role-${user.role}`}>{user.role}</span>
               </div>
+              {user.role === 'admin' && (
+                <Link href={`/${site}/admin/sites`} className="user-dropdown-link" onClick={() => setMenuOpen(false)}>
+                  <Icon name="gear" size={14} /> Connected repos
+                </Link>
+              )}
               <button onClick={logout}>
                 <Icon name="logout" size={14} /> Sign out
               </button>
@@ -158,7 +181,7 @@ export default function Topbar({
           return (
             <Link
               key={tab.tab}
-              href={`/${first}`}
+              href={`/${site}/${first}`}
               className={tab.tab === activeTab ? 'tab-link active' : 'tab-link'}
             >
               {tab.tab}
@@ -166,8 +189,8 @@ export default function Topbar({
           );
         })}
       </div>
-      {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
-      {askOpen && <AskAI onClose={() => setAskOpen(false)} />}
+      {searchOpen && <SearchModal site={site} onClose={() => setSearchOpen(false)} />}
+      {askOpen && <AskAI site={site} onClose={() => setAskOpen(false)} />}
     </header>
   );
 }

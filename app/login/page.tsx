@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { SELF_SLUG } from '@/lib/sites';
 import { getDescopeConfig } from '@/lib/descope';
 import DescopeLogin from '@/components/DescopeLogin';
 
@@ -10,7 +11,7 @@ export const metadata = { title: 'Sign in' };
 export default async function LoginPage() {
   const user = await getSessionUser();
   if (user) redirect('/');
-  const config = getConfig();
+  const config = getConfig(SELF_SLUG);
   const descope = getDescopeConfig();
   return (
     <div className="login-screen">

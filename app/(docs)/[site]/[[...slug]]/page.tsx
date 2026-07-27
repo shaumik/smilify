@@ -1,12 +1,12 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { compileDocMDX } from '@/lib/mdx';
 import { cookies } from 'next/headers';
+import { compileDocMDX } from '@/lib/mdx';
 import { getSessionUser } from '@/lib/auth';
 import { canAccessPage, getConfig, getVersions } from '@/lib/config';
-import { logEvent } from '@/lib/analytics';
 import { extractToc, getPage, getPager } from '@/lib/content';
-import { mdxComponents } from '@/components/mdx';
+import { getSite } from '@/lib/sites';
+import { logEvent } from '@/lib/analytics';
 import Toc from '@/components/Toc';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import PageFooter from '@/components/PageFooter';
@@ -15,16 +15,26 @@ import AsyncApiPage from '@/components/api/AsyncApiPage';
 
 export const dynamic = 'force-dynamic';
 
-function slugFromParams(params: { slug?: string[] }): string {
-  return params.slug?.join('/') ?? 'introduction';
+// The site root serves the repo's landing page: index.mdx if present,
+// else introduction.mdx (this platform's convention), else the first
+// navigation page.
+function slugFromParams(site: string, params: { slug?: string[] }): string {
+  if (params.slug?.length) return params.slug.join('/');
+  for (const candidate of ['index', 'introduction']) {
+    if (getPage(site, candidate)) return candidate;
+  }
+  return getConfig(site).navigation.tabs[0]?.groups[0]?.pages.find(
+    (p): p is string => typeof p === 'string'
+  ) ?? 'index';
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: { slug?: string[] };
+  params: { site: string; slug?: string[] };
 }): Promise<Metadata> {
-  const page = getPage(slugFromParams(params));
+  if (!getSite(params.site)) return {};
+  const page = getPage(params.site, slugFromParams(params.site, params));
   if (!page) return {};
   return {
     title: page.frontmatter.title,
@@ -32,16 +42,22 @@ export async function generateMetadata({
   };
 }
 
-export default async function DocPage({ params }: { params: { slug?: string[] } }) {
+export default async function DocPage({
+  params,
+}: {
+  params: { site: string; slug?: string[] };
+}) {
   const user = await getSessionUser();
   if (!user) return null; // layout redirects; keep types happy
-  const slug = slugFromParams(params);
-  const page = getPage(slug);
+  const site = params.site;
+  if (!getSite(site)) notFound();
+  const slug = slugFromParams(site, params);
+  const page = getPage(site, slug);
   // Hide pages that don't exist or that this role may not see.
-  if (!page || !canAccessPage(slug, user.role)) notFound();
-  logEvent({ type: 'page_view', path: `/${slug}`, actor: user.email, agent: 'human' });
+  if (!page || !canAccessPage(site, slug, user.role)) notFound();
+  logEvent({ type: 'page_view', path: `/${site}/${slug}`, actor: user.email, agent: 'human' });
 
-  const versions = getVersions();
+  const versions = getVersions(site);
   const cookieVersion = cookies().get('smilify_version')?.value;
   const version =
     versions.length > 0
@@ -49,12 +65,13 @@ export default async function DocPage({ params }: { params: { slug?: string[] } 
         ? cookieVersion
         : versions[0]
       : undefined;
-  const pager = getPager(slug, user.role, version);
+  const pager = getPager(site, slug, user.role, version);
 
   // Event reference pages delegate to the AsyncAPI renderer.
   if (page.frontmatter.asyncapi) {
     return (
       <AsyncApiPage
+        site={site}
         slug={slug}
         asyncapiRef={page.frontmatter.asyncapi}
         frontmatter={page.frontmatter}
@@ -68,6 +85,7 @@ export default async function DocPage({ params }: { params: { slug?: string[] } 
   if (page.frontmatter.openapi) {
     return (
       <ApiPage
+        site={site}
         slug={slug}
         openapiRef={page.frontmatter.openapi}
         frontmatter={page.frontmatter}
@@ -78,20 +96,20 @@ export default async function DocPage({ params }: { params: { slug?: string[] } 
   }
 
   const toc = extractToc(page.content);
-  const content = await compileDocMDX(page.content);
+  const content = await compileDocMDX(page.content, site);
 
-  const feedback = getConfig().feedback?.thumbsRating !== false;
+  const feedback = getConfig(site).feedback?.thumbsRating !== false;
 
   return (
     <>
       <article className="doc-article">
-        <Breadcrumbs slug={slug} />
+        <Breadcrumbs site={site} slug={slug} />
         <header className="doc-header">
           <h1>{page.frontmatter.title ?? slug}</h1>
           {page.frontmatter.description && <p>{page.frontmatter.description}</p>}
         </header>
         <div className="prose">{content}</div>
-        <PageFooter slug={slug} pager={pager} feedback={feedback} />
+        <PageFooter site={site} slug={slug} pager={pager} feedback={feedback} />
       </article>
       <Toc entries={toc} />
     </>

@@ -2,8 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { getOrderedPages, Role } from './config';
+import { contentRoot } from './sites';
 
-const CONTENT_DIR = path.join(process.cwd(), 'content');
+function contentDir(site: string): string {
+  return path.join(contentRoot(site), 'content');
+}
 
 export interface PageFrontmatter {
   title?: string;
@@ -20,35 +23,37 @@ export interface DocPage {
   content: string;
 }
 
-export function pageFilePath(slug: string): string | null {
+export function pageFilePath(site: string, slug: string): string | null {
   // snippets/ holds reusable fragments, not routable pages
   if (slug.startsWith('snippets/')) return null;
+  const dir = contentDir(site);
   const safe = slug.replace(/\.+/g, '.');
-  const candidate = path.join(CONTENT_DIR, `${safe}.mdx`);
-  if (!candidate.startsWith(CONTENT_DIR)) return null;
+  const candidate = path.join(dir, `${safe}.mdx`);
+  if (!candidate.startsWith(dir)) return null;
   return fs.existsSync(candidate) ? candidate : null;
 }
 
-export function getPage(slug: string): DocPage | null {
-  const file = pageFilePath(slug);
+export function getPage(site: string, slug: string): DocPage | null {
+  const file = pageFilePath(site, slug);
   if (!file) return null;
   const raw = fs.readFileSync(file, 'utf8');
   const { data, content } = matter(raw);
   return { slug, frontmatter: data as PageFrontmatter, content };
 }
 
-export function getAllSlugs(): string[] {
+export function getAllSlugs(site: string): string[] {
+  const root = contentDir(site);
   const slugs: string[] = [];
   const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
       else if (entry.name.endsWith('.mdx')) {
-        slugs.push(path.relative(CONTENT_DIR, full).replace(/\.mdx$/, '').split(path.sep).join('/'));
+        slugs.push(path.relative(root, full).replace(/\.mdx$/, '').split(path.sep).join('/'));
       }
     }
   };
-  walk(CONTENT_DIR);
+  walk(root);
   return slugs;
 }
 
@@ -59,14 +64,15 @@ export interface PagerLink {
 
 /** Previous/next links within the role's visible navigation order. */
 export function getPager(
+  site: string,
   slug: string,
   role: Role,
   version?: string
 ): { prev: PagerLink | null; next: PagerLink | null } {
-  const ordered = getOrderedPages(role, version);
+  const ordered = getOrderedPages(site, role, version);
   const idx = ordered.findIndex((p) => p.slug === slug);
   if (idx === -1) return { prev: null, next: null };
-  const titleOf = (s: string) => getPage(s)?.frontmatter.title ?? s.split('/').pop() ?? s;
+  const titleOf = (s: string) => getPage(site, s)?.frontmatter.title ?? s.split('/').pop() ?? s;
   const prev = idx > 0 ? ordered[idx - 1] : null;
   const next = idx < ordered.length - 1 ? ordered[idx + 1] : null;
   return {

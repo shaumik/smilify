@@ -1,0 +1,84 @@
+---
+title: Connecting repos
+description: Turn any GitHub repository into a docs site, synced on every push.
+icon: git-branch
+---
+
+Smilify is a platform, not a single site. Each repository you connect becomes
+its own docs site — served at `/<slug>`, with its own navigation, branding,
+search index, API reference, and agent surfaces — and re-syncs automatically
+whenever the tracked branch is pushed.
+
+<Info>
+The platform's own manual (what you're reading) ships as the built-in `docs`
+site, so a fresh deployment works before anything is connected.
+</Info>
+
+## What a repo needs
+
+A connected repo uses the same format as this site:
+
+- `docs.json` — name, colors, navigation (see [Navigation](/writing/navigation))
+- `content/**/*.mdx` — the pages
+- optionally `openapi/openapi.json`, `asyncapi/asyncapi.json`, and
+  `content/snippets/`
+
+If the docs live in a subdirectory of a larger repo (say `docs/`), set the
+**Docs path** when connecting — everything above applies relative to it.
+
+## One-time: install the GitHub App
+
+The platform authenticates to your repos as a GitHub App — like Mintlify's
+GitHub App, this means short-lived, read-only tokens minted on demand, and no
+personal access tokens stored anywhere.
+
+<Steps>
+  <Step title="Create the App">
+    GitHub org → **Settings → Developer settings → GitHub Apps → New GitHub
+    App**. Grant one permission: **Repository contents: Read-only**. Set the
+    webhook URL to `https://<docs-host>/api/github/webhook` with a secret, and
+    subscribe to **Push** events.
+  </Step>
+  <Step title="Configure the platform">
+    Set `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` (the App's PEM key, raw or
+    base64), and `GITHUB_WEBHOOK_SECRET` in the platform environment and
+    restart.
+  </Step>
+  <Step title="Install on your repos">
+    From the App's page, install it on each repository you want to document.
+    You can add repos to the installation at any time.
+  </Step>
+</Steps>
+
+## Connect a repository
+
+Open **Connected repos** from the user menu (admins only), or go to
+`/docs/admin/sites`. Enter a slug (`acme` → served at `/acme`), the repository
+as `owner/repo`, the branch to track, and the docs path if any. The platform
+clones it, validates `docs.json`, and the site is live.
+
+From then on, every push to the tracked branch triggers the webhook and the
+site re-syncs within seconds — writers just merge PRs, the same
+docs-as-code loop Mintlify runs.
+
+## How syncing works
+
+- Repos are cloned shallowly into `data/repos/<slug>` on the platform host.
+- Each sync mints a fresh installation token, fetches, and hard-resets to the
+  tracked branch. Tokens are never written to disk.
+- A failed sync (bad branch, missing `docs.json`, App not installed) keeps the
+  previous good copy serving and surfaces the error on the dashboard.
+- **Sync** on the dashboard forces a manual re-sync; **Disconnect** removes
+  the site and its synced copy (the source repo is untouched).
+
+## Agent surfaces are per-site
+
+Every connected site automatically gets the full agent layer:
+
+- `/<slug>/llms.txt` and `/<slug>/llms-full.txt`
+- any page as markdown at `/<slug>/<page>.md`
+- the shared MCP endpoint at `/api/mcp`, where pages are addressed as
+  `<slug>/<page>` and search spans every site
+
+Access control, search, versioning, and analytics all apply per site with the
+same roles you already have.

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { contentRoot, siteVersion } from './sites';
 
 /** A group's pages can be plain slugs or nested sub-groups (recursive). */
 export type NavEntry = string | NavGroup;
@@ -38,23 +39,25 @@ export interface DocsConfig {
   feedback?: { thumbsRating?: boolean };
 }
 
-let cached: DocsConfig | null = null;
+const cached = new Map<string, DocsConfig>();
 
-export function getConfig(): DocsConfig {
-  if (cached && process.env.NODE_ENV === 'production') return cached;
-  const raw = fs.readFileSync(path.join(process.cwd(), 'docs.json'), 'utf8');
-  cached = JSON.parse(raw) as DocsConfig;
-  return cached;
+export function getConfig(site: string): DocsConfig {
+  const key = `${site}@${siteVersion(site)}`;
+  if (process.env.NODE_ENV === 'production' && cached.has(key)) return cached.get(key)!;
+  const raw = fs.readFileSync(path.join(contentRoot(site), 'docs.json'), 'utf8');
+  const config = JSON.parse(raw) as DocsConfig;
+  cached.set(key, config);
+  return config;
 }
 
 export type Role = 'admin' | 'member';
 
-export function getVersions(): string[] {
-  return getConfig().navigation.versions ?? [];
+export function getVersions(site: string): string[] {
+  return getConfig(site).navigation.versions ?? [];
 }
 
-export function defaultVersion(): string | undefined {
-  return getVersions()[0];
+export function defaultVersion(site: string): string | undefined {
+  return getVersions(site)[0];
 }
 
 function isGroup(entry: NavEntry): entry is NavGroup {
@@ -86,8 +89,8 @@ function filterGroup(g: NavGroup, role: Role, version?: string): NavGroup | null
  * Navigation filtered to what the role may see, optionally scoped to a
  * version. Pass no version to include every version (search, llms, pager).
  */
-export function getNavigationForRole(role: Role, version?: string): NavTab[] {
-  const { navigation } = getConfig();
+export function getNavigationForRole(site: string, role: Role, version?: string): NavTab[] {
+  const { navigation } = getConfig(site);
   return navigation.tabs
     .map((tab) => ({
       ...tab,
@@ -112,9 +115,9 @@ function collectPages(g: NavGroup, tab: string, out: OrderedPage[]) {
 }
 
 /** All page slugs visible to a role (and optional version), in nav order. */
-export function getOrderedPages(role: Role, version?: string): OrderedPage[] {
+export function getOrderedPages(site: string, role: Role, version?: string): OrderedPage[] {
   const out: OrderedPage[] = [];
-  for (const tab of getNavigationForRole(role, version)) {
+  for (const tab of getNavigationForRole(site, role, version)) {
     for (const group of tab.groups) collectPages(group, tab.tab, out);
   }
   return out;
@@ -134,8 +137,8 @@ function findAccess(g: NavGroup, slug: string, inherited?: 'admin'): 'admin' | '
 }
 
 /** Whether a role may view a slug. Access is inherited from ancestor groups. */
-export function canAccessPage(slug: string, role: Role): boolean {
-  for (const tab of getConfig().navigation.tabs) {
+export function canAccessPage(site: string, slug: string, role: Role): boolean {
+  for (const tab of getConfig(site).navigation.tabs) {
     for (const group of tab.groups) {
       const found = findAccess(group, slug);
       if (found) return found === 'any' || found === role;

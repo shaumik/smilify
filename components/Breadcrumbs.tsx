@@ -13,8 +13,8 @@ function findTrail(g: NavGroup, slug: string, parents: string[]): string[] | nul
   return null;
 }
 
-export default function Breadcrumbs({ slug }: { slug: string }) {
-  const { navigation } = getConfig();
+export default function Breadcrumbs({ site, slug }: { site: string; slug: string }) {
+  const { navigation } = getConfig(site);
   let trail: string[] = [];
   for (const tab of navigation.tabs) {
     for (const group of tab.groups) {

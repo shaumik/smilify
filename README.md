@@ -1,15 +1,23 @@
-# Smilify Docs
+# Smilify
 
-Our self-hosted documentation platform — the internal replacement for Mintlify.
-Built, verified end-to-end, and live on `main`.
+Our self-hosted documentation **platform** — the internal replacement for
+Mintlify. Like Mintlify, the platform is separate from the content: install
+the GitHub App, connect any repository from the admin dashboard, and it
+becomes a docs site at `/<slug>`, re-synced on every push. The platform's own
+manual ships as the built-in `docs` site.
 
-`Next.js 14 · TypeScript` · `34 doc pages · 5 API endpoints` · `Descope SSO` · `Agent-native (llms.txt · .md · MCP)` · `100% self-hosted`
+`Next.js 14 · TypeScript` · `Multi-site: one deployment, many repos` · `GitHub App + webhook sync` · `Descope SSO` · `Agent-native (llms.txt · .md · MCP)` · `100% self-hosted`
 
 ## What we built
 
 Everything the docs experience needs, behind our own auth. Mintlify-compatible:
-existing Mintlify content migrates by copying `docs.json` and moving MDX files
-into `content/`.
+an existing Mintlify repo connects as-is — `docs.json` plus MDX pages in
+`content/`.
+
+- **Connected repos** — each GitHub repo you connect is its own docs site with
+  its own navigation, branding, search index, API reference, and agent
+  surfaces. Auth is a GitHub App (short-lived read-only tokens, no PATs);
+  a push webhook re-syncs the site in seconds.
 
 - **MDX authoring** — frontmatter, GFM, and the full component library:
   callouts, cards, tabs, accordions, steps, fields, frames, code groups.
@@ -31,11 +39,11 @@ into `content/`.
 
 ## Architecture
 
-> **There is no database. Git is the datastore.** Content, navigation, and the
-> API spec are files in the repo; publishing is a git push. Sessions are
-> stateless signed cookies. Search is an in-memory index rebuilt from content.
-> Nothing to migrate, back up, or scale — the only mutable state is an
-> append-only feedback log.
+> **There is no database. Git is the datastore.** Every docs site is a git
+> repo; publishing is a git push. Connected repos are shallow clones under
+> `data/repos/`, refreshed by the GitHub webhook; the site registry is one
+> JSON file. Sessions are stateless signed cookies. Search is an in-memory
+> index per site. Nothing to migrate, back up, or scale beyond a data volume.
 
 ### The stack, layer by layer
 
@@ -54,7 +62,9 @@ into `content/`.
 
 | State | Store | Durability |
 | --- | --- | --- |
-| Docs content, nav, OpenAPI spec | Git repository (files) | Versioned forever; deploys are git deploys |
+| Docs content, nav, API specs | Git repositories (the connected repos) | Versioned forever; publishing is a push |
+| Site registry (connected repos) | `data/sites.json` | One small file; mount `data/` as a volume |
+| Synced repo copies | `data/repos/<slug>` shallow clones | Rebuilt from GitHub on demand — disposable |
 | User sessions | Signed JWT in the browser cookie | Stateless; 7-day expiry; revoked by rotating `SESSION_SECRET` |
 | Search index | Server memory | Rebuilt from content on boot — nothing to persist |
 | API sandbox data | Server memory | Seeded on boot, resets on restart — by design for demos |
@@ -67,12 +77,13 @@ Every request passes the session guard:
 ```mermaid
 flowchart LR
     B[Browser] --> MW{Edge middleware: verify JWT cookie}
-    MW -- no session --> L[/login: Descope Flow or local/]
-    MW -- session --> APP[App Router]
-    APP --> MDX[MDX pages compiled from content/]
-    APP --> API[Search, feedback, llms.txt - role-filtered]
-    APP --> REF[API reference from openapi.json]
-    REF --> SBX[Playground -> /api/v1 bearer-key sandbox API]
+    MW -- no session --> L[/login: Descope Flow/]
+    MW -- session --> APP["App Router: /&lt;site&gt;/&lt;page&gt;"]
+    APP --> MDX[MDX compiled from the site's synced repo]
+    APP --> API[Search, feedback, llms.txt - per-site, role-filtered]
+    APP --> REF[API reference from the site's openapi.json]
+    GH[GitHub push] -- signed webhook --> SYNC[/api/github/webhook: re-sync site/]
+    SYNC --> MDX
 ```
 
 ### Sign-in
@@ -138,7 +149,9 @@ translations.
 
 | Mintlify feature | Status | Notes |
 | --- | --- | --- |
-| Docs-as-code (git-native) | ✅ | Arguably stronger — the site *is* the repo |
+| Docs-as-code (git-native) | ✅ | Arguably stronger — every site *is* a repo |
+| GitHub App: connect any repo, sync on push | ✅ | Admin dashboard at `/docs/admin/sites`; webhook re-sync |
+| Multiple docs sites per deployment | ✅ | Each repo serves at `/<slug>` with its own branding and search |
 | WYSIWYG web editor | ❌ | The one remaining gap for non-technical editors |
 | Preview deployments per PR | ✅ | CI: build + link check + preview deploy hook + PR comment |
 
@@ -155,9 +168,10 @@ translations.
 
 ## "Self-updating documentation for agents" — now true
 
-- **Agents build on it.** Role-aware `llms.txt` + `llms-full.txt`, every page
-  as raw markdown at `/<slug>.md`, an MCP server at `/api/mcp`, bearer-token
-  auth for agents (`DOCS_AGENT_TOKEN`), and an embedded Ask AI assistant.
+- **Agents build on it.** Per-site `llms.txt` + `llms-full.txt`, every page
+  as raw markdown at `/<site>/<page>.md`, one MCP server at `/api/mcp`
+  spanning every connected site, bearer-token auth for agents
+  (`DOCS_AGENT_TOKEN`), and an embedded Ask AI assistant.
 - **Self-updating.** The API reference regenerates from the OpenAPI spec on
   every request, and `.github/workflows/docs-agent.yml` runs Claude Code on
   each merge to propose doc-sync PRs for prose. Humans approve every change.
@@ -185,6 +199,13 @@ everyone else who can sign in is a member. `DESCOPE_ADMIN_EMAILS`
 force-grants admin for bootstrapping the first admin. Assign roles in the
 Descope console (Users → assign role); they apply on next sign-in.
 
+**Connecting repos**: create a GitHub App (Contents: read-only; push webhook
+→ `/api/github/webhook`), set `GITHUB_APP_ID` / `GITHUB_APP_PRIVATE_KEY` /
+`GITHUB_WEBHOOK_SECRET`, install it on your repos, then connect them from
+**Connected repos** (`/docs/admin/sites`). Full guide: the
+`admin/connecting-repos` page in the built-in docs.
+
 **Live demo script**: auth wall → sidebar/search/dark mode → Components
-section → API playground (real `201`, clear key for `401`) → sign in with a
-non-admin Descope user to show role gating → `/llms.txt`.
+section → API playground (real `201`, clear key for `401`) → connect a repo
+live at `/docs/admin/sites` → push to it and watch the site update → sign in
+with a non-admin Descope user to show role gating → `/docs/llms.txt`.

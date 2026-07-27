@@ -65,7 +65,7 @@
           {
             "group": "Admin",
             "access": "admin",
-            "pages": ["admin/deployment", "admin/user-management", "admin/analytics"]
+            "pages": ["admin/connecting-repos", "admin/deployment", "admin/user-management", "admin/analytics"]
           }
         ]
       },

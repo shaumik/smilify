@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
 import { getConfig } from '@/lib/config';
+import { SELF_SLUG } from '@/lib/sites';
 import './globals.css';
 
-const config = getConfig();
+// Platform-level chrome (metadata, fallback colors) comes from the built-in
+// site; each docs site injects its own colors in its layout.
+const config = getConfig(SELF_SLUG);
 
+// Per-site titles/templates come from the [site] layout's generateMetadata.
 export const metadata: Metadata = {
-  title: { default: config.name, template: `%s - ${config.name}` },
+  title: config.name,
   description: config.description,
   icons: { icon: '/logo.svg' },
 };

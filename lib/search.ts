@@ -1,5 +1,6 @@
 import MiniSearch from 'minisearch';
 import { getOrderedPages } from './config';
+import { siteVersion } from './sites';
 import { getPage, stripMarkdown } from './content';
 
 export interface SearchDoc {
@@ -16,11 +17,11 @@ interface Index {
   docs: Map<string, SearchDoc>;
 }
 
-// Index everything an admin can see; results are filtered per-role at query
-// time so members never receive admin-only pages.
-let cached: Index | null = null;
+// One index per site, keyed by sync version. Indexes everything an admin
+// can see; results are filtered per-role at query time.
+const indexes = new Map<string, Index>();
 
-function buildIndex(): Index {
+function buildIndex(site: string): Index {
   const mini = new MiniSearch<SearchDoc>({
     fields: ['title', 'description', 'text', 'group'],
     storeFields: ['title', 'description', 'group', 'tab'],
@@ -31,8 +32,8 @@ function buildIndex(): Index {
     },
   });
   const docs = new Map<string, SearchDoc>();
-  for (const { slug, group, tab } of getOrderedPages('admin')) {
-    const page = getPage(slug);
+  for (const { slug, group, tab } of getOrderedPages(site, 'admin')) {
+    const page = getPage(site, slug);
     if (!page) continue;
     const doc: SearchDoc = {
       id: slug,
@@ -48,9 +49,12 @@ function buildIndex(): Index {
   return { mini, docs };
 }
 
-function getIndex(): Index {
-  if (!cached || process.env.NODE_ENV !== 'production') cached = buildIndex();
-  return cached;
+function getIndex(site: string): Index {
+  const key = `${site}@${siteVersion(site)}`;
+  if (process.env.NODE_ENV !== 'production' || !indexes.has(key)) {
+    indexes.set(key, buildIndex(site));
+  }
+  return indexes.get(key)!;
 }
 
 export interface SearchResult {
@@ -75,9 +79,9 @@ function makeSnippet(text: string, terms: string[]): string {
   return (start > 0 ? '…' : '') + snippet + (start + 160 < text.length ? '…' : '');
 }
 
-export function search(query: string, role: 'admin' | 'member', limit = 10): SearchResult[] {
-  const { mini, docs } = getIndex();
-  const allowed = new Set(getOrderedPages(role).map((p) => p.slug));
+export function search(site: string, query: string, role: 'admin' | 'member', limit = 10): SearchResult[] {
+  const { mini, docs } = getIndex(site);
+  const allowed = new Set(getOrderedPages(site, role).map((p) => p.slug));
   const results = mini.search(query);
   const out: SearchResult[] = [];
   for (const r of results) {

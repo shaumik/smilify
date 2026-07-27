@@ -38,19 +38,21 @@ function subscribeSamples(server: string, address: string) {
 }
 
 export default async function AsyncApiPage({
+  site,
   slug,
   asyncapiRef,
   frontmatter,
   intro,
   pager,
 }: {
+  site: string;
   slug: string;
   asyncapiRef: string;
   frontmatter: PageFrontmatter;
   intro: string;
   pager: { prev: PagerLink | null; next: PagerLink | null };
 }) {
-  const op = getAsyncOperation(asyncapiRef);
+  const op = getAsyncOperation(site, asyncapiRef);
   if (!op) {
     return (
       <article className="doc-article">
@@ -61,13 +63,13 @@ export default async function AsyncApiPage({
       </article>
     );
   }
-  const spec = getAsyncSpec();
-  const introContent = intro.trim() ? await compileDocMDX(intro) : null;
+  const spec = getAsyncSpec(site);
+  const introContent = intro.trim() ? await compileDocMDX(intro, site) : null;
 
   return (
     <>
       <article className="doc-article api-article">
-        <Breadcrumbs slug={slug} />
+        <Breadcrumbs site={site} slug={slug} />
         <header className="doc-header">
           <h1>{frontmatter.title ?? op.summary}</h1>
           {(frontmatter.description || op.description) && (
@@ -104,7 +106,7 @@ export default async function AsyncApiPage({
             </div>
           ))}
         </div>
-        <PageFooter slug={slug} pager={pager} feedback />
+        <PageFooter site={site} slug={slug} pager={pager} feedback />
       </article>
       <aside className="api-panel">
         <SamplesPanel samples={subscribeSamples(op.server, op.address)} />

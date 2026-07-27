@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Icon from './Icon';
-import type { NavGroupData, NavPageData, NavTabData } from '@/app/(docs)/layout';
+import type { NavGroupData, NavPageData, NavTabData } from '@/app/(docs)/[site]/layout';
 import type { NavAnchor } from '@/lib/config';
 
 function containsSlug(items: (NavPageData | NavGroupData)[], slug: string): boolean {
@@ -13,10 +13,12 @@ function containsSlug(items: (NavPageData | NavGroupData)[], slug: string): bool
 }
 
 function NavItems({
+  site,
   items,
   slug,
   onNavigate,
 }: {
+  site: string;
   items: (NavPageData | NavGroupData)[];
   slug: string;
   onNavigate: () => void;
@@ -27,7 +29,7 @@ function NavItems({
         item.kind === 'page' ? (
           <li key={item.slug}>
             <Link
-              href={`/${item.slug}`}
+              href={`/${site}/${item.slug}`}
               onClick={onNavigate}
               className={item.slug === slug ? 'nav-link active' : 'nav-link'}
             >
@@ -43,7 +45,7 @@ function NavItems({
                 {item.group}
               </summary>
               <div className="nav-subgroup-items">
-                <NavItems items={item.items} slug={slug} onNavigate={onNavigate} />
+                <NavItems site={site} items={item.items} slug={slug} onNavigate={onNavigate} />
               </div>
             </details>
           </li>
@@ -54,16 +56,18 @@ function NavItems({
 }
 
 export default function Sidebar({
+  site,
   nav,
   anchors,
   socials,
 }: {
+  site: string;
   nav: NavTabData[];
   anchors: NavAnchor[];
   socials: Record<string, string>;
 }) {
   const pathname = usePathname();
-  const slug = pathname.replace(/^\//, '') || 'introduction';
+  const slug = pathname.replace(new RegExp(`^/${site}/?`), '') || 'introduction';
 
   let activeTab = nav[0];
   for (const tab of nav) {
@@ -113,7 +117,7 @@ export default function Sidebar({
                   </span>
                 )}
               </div>
-              <NavItems items={group.items} slug={slug} onNavigate={closeMobile} />
+              <NavItems site={site} items={group.items} slug={slug} onNavigate={closeMobile} />
             </div>
           ))}
         </nav>

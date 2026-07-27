@@ -2,23 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getActor } from '@/lib/agent-auth';
 import { getConfig, getOrderedPages } from '@/lib/config';
 import { getPage } from '@/lib/content';
+import { getSite, SELF_SLUG } from '@/lib/sites';
 import { classifyAgent, logEvent } from '@/lib/analytics';
 
-// llms-full.txt: the entire documentation set as one markdown document,
-// role-filtered. Session cookie or the docs agent bearer token.
+// llms-full.txt: a site's entire documentation set as one markdown document,
+// role-filtered. Reached at /<site>/llms-full.txt or /llms-full.txt?site=<slug>.
 export async function GET(req: NextRequest) {
   const actor = await getActor(req);
   if (!actor) return new NextResponse('unauthorized', { status: 401 });
+  const site =
+    req.nextUrl.searchParams.get('site')?.trim() ||
+    req.headers.get('x-docs-site')?.trim() ||
+    SELF_SLUG;
+  if (!getSite(site)) return new NextResponse('unknown site\n', { status: 404 });
   logEvent({
     type: 'llms_full',
-    path: '/llms-full.txt',
+    path: `/${site}/llms-full.txt`,
     actor: actor.email,
     ...classifyAgent(req.headers.get('user-agent')),
   });
-  const config = getConfig();
+  const config = getConfig(site);
   const parts: string[] = [`# ${config.name}`, '', `> ${config.description ?? ''}`];
-  for (const { slug, tab, group } of getOrderedPages(actor.role)) {
-    const page = getPage(slug);
+  for (const { slug, tab, group } of getOrderedPages(site, actor.role)) {
+    const page = getPage(site, slug);
     if (!page) continue;
     parts.push(
       '',
@@ -26,7 +32,7 @@ export async function GET(req: NextRequest) {
       '',
       `# ${page.frontmatter.title ?? slug}`,
       '',
-      `Path: /${slug} · Section: ${tab} › ${group}`,
+      `Path: /${site}/${slug} · Section: ${tab} › ${group}`,
       page.frontmatter.description ? `\n> ${page.frontmatter.description}` : '',
       '',
       page.content.trim()

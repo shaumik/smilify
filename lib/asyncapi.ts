@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { getConfig } from './config';
+import { contentRoot, siteVersion } from './sites';
 import { exampleFromSchema, resolveRef } from './openapi';
 
 type Json = any;
@@ -25,16 +26,18 @@ export interface AsyncOperation {
   messages: AsyncMessage[];
 }
 
-let cachedSpec: Json | null = null;
+const cachedSpecs = new Map<string, Json>();
 
-export function getAsyncSpec(): Json | null {
-  if (cachedSpec && process.env.NODE_ENV === 'production') return cachedSpec;
-  const rel = (getConfig().api as Json)?.asyncapi ?? 'asyncapi/asyncapi.json';
-  const file = path.join(process.cwd(), rel);
+export function getAsyncSpec(site: string): Json | null {
+  const key = `${site}@${siteVersion(site)}`;
+  if (process.env.NODE_ENV === 'production' && cachedSpecs.has(key)) return cachedSpecs.get(key);
+  const rel = (getConfig(site).api as Json)?.asyncapi ?? 'asyncapi/asyncapi.json';
+  const file = path.join(contentRoot(site), rel);
   if (!fs.existsSync(file)) return null;
   const raw = fs.readFileSync(file, 'utf8');
-  cachedSpec = file.endsWith('.yaml') || file.endsWith('.yml') ? yaml.load(raw) : JSON.parse(raw);
-  return cachedSpec;
+  const spec = file.endsWith('.yaml') || file.endsWith('.yml') ? yaml.load(raw) : JSON.parse(raw);
+  cachedSpecs.set(key, spec);
+  return spec;
 }
 
 /**
@@ -42,8 +45,8 @@ export function getAsyncSpec(): Json | null {
  * "<send|receive> <channelKey>", e.g. "receive smileEvents".
  * Supports AsyncAPI 3.0 (channels + operations + components.messages).
  */
-export function getAsyncOperation(ref: string): AsyncOperation | null {
-  const spec = getAsyncSpec();
+export function getAsyncOperation(site: string, ref: string): AsyncOperation | null {
+  const spec = getAsyncSpec(site);
   if (!spec) return null;
   const m = /^(send|receive)\s+(\S+)$/i.exec(ref.trim());
   if (!m) return null;

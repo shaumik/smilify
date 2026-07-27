@@ -4,19 +4,22 @@ import { hasAgentToken } from './lib/agent-auth';
 
 // Every route requires an authenticated session except:
 //  - the login page and auth APIs
+//  - the GitHub webhook (its own HMAC signature auth)
 //  - the Smilify API (its own bearer-key auth, like any product API)
 //  - Next.js internals and static assets
 // Machine-readable surfaces additionally accept the docs agent bearer token
-// (agents don't hold browser cookies): llms.txt, llms-full.txt, any page as
-// .md, the MCP endpoint, and search.
+// (agents don't hold browser cookies): per-site llms.txt / llms-full.txt,
+// any page as .md, the MCP endpoint, and search.
 const PUBLIC_PATHS = [
   /^\/login$/,
   /^\/api\/auth\/descope\/token$/,
+  /^\/api\/github\/webhook$/,
   /^\/api\/v1(\/|$)/,
 ];
 
 const AGENT_PATHS = [
   /^\/llms(-full)?\.txt$/,
+  /^\/[^/]+\/llms(-full)?\.txt$/,
   /^\/api\/mcp$/,
   /^\/api\/search$/,
   /^\/api\/raw(\/|$)/,
@@ -43,7 +46,19 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  // Serve any page as raw markdown at <slug>.md (agent-friendly URLs).
+  // /<site>/llms.txt and /<site>/llms-full.txt → the site-scoped route.
+  // The site travels in a request header: query params set here are not
+  // reliably visible to the rewritten route handler.
+  const llms = pathname.match(/^\/([^/]+)\/(llms(?:-full)?\.txt)$/);
+  if (llms) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/${llms[2]}`;
+    const headers = new Headers(req.headers);
+    headers.set('x-docs-site', llms[1]);
+    return NextResponse.rewrite(url, { request: { headers } });
+  }
+
+  // Serve any page as raw markdown at /<site>/<slug>.md (agent-friendly URLs).
   if (isMarkdown) {
     const url = req.nextUrl.clone();
     url.pathname = `/api/raw/${pathname.slice(1, -3)}`;

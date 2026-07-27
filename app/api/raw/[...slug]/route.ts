@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getActor } from '@/lib/agent-auth';
 import { canAccessPage } from '@/lib/config';
 import { getPage } from '@/lib/content';
+import { getSite } from '@/lib/sites';
 import { classifyAgent, logEvent } from '@/lib/analytics';
 
 // Raw markdown for any docs page. Reached directly or via the middleware
@@ -9,14 +10,16 @@ import { classifyAgent, logEvent } from '@/lib/analytics';
 export async function GET(req: NextRequest, { params }: { params: { slug: string[] } }) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const slug = params.slug.join('/');
-  const page = getPage(slug);
-  if (!page || !canAccessPage(slug, actor.role)) {
+  const [site, ...rest] = params.slug;
+  const slug = rest.join('/');
+  if (!getSite(site) || !slug) return new NextResponse('not found\n', { status: 404 });
+  const page = getPage(site, slug);
+  if (!page || !canAccessPage(site, slug, actor.role)) {
     return new NextResponse('not found\n', { status: 404 });
   }
   logEvent({
     type: 'raw_md',
-    path: `/${slug}.md`,
+    path: `/${site}/${slug}.md`,
     actor: actor.email,
     ...classifyAgent(req.headers.get('user-agent')),
   });

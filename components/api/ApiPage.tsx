@@ -1,28 +1,28 @@
-import { compileMDX } from 'next-mdx-remote/rsc';
-import remarkGfm from 'remark-gfm';
 import { getOperation, getSpec, schemaRows } from '@/lib/openapi';
 import { codeSamples } from '@/lib/samples';
 import type { PageFrontmatter, PagerLink } from '@/lib/content';
-import { mdxComponents } from '@/components/mdx';
+import { compileDocMDX } from '@/lib/mdx';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import PageFooter from '@/components/PageFooter';
 import Playground from './Playground';
 import SamplesPanel from './SamplesPanel';
 
 export default async function ApiPage({
+  site,
   slug,
   openapiRef,
   frontmatter,
   intro,
   pager,
 }: {
+  site: string;
   slug: string;
   openapiRef: string;
   frontmatter: PageFrontmatter;
   intro: string;
   pager: { prev: PagerLink | null; next: PagerLink | null };
 }) {
-  const op = getOperation(openapiRef);
+  const op = getOperation(site, openapiRef);
   if (!op) {
     return (
       <article className="doc-article">
@@ -33,17 +33,9 @@ export default async function ApiPage({
       </article>
     );
   }
-  const spec = getSpec();
+  const spec = getSpec(site);
 
-  let introContent: React.ReactNode = null;
-  if (intro.trim()) {
-    const { content } = await compileMDX({
-      source: intro,
-      components: mdxComponents,
-      options: { mdxOptions: { remarkPlugins: [remarkGfm] } },
-    });
-    introContent = content;
-  }
+  const introContent = intro.trim() ? await compileDocMDX(intro, site) : null;
 
   const bodyRows = op.requestBody ? schemaRows(spec, op.requestBody.schema) : [];
   const okResponse = op.responses.find((r) => r.status.startsWith('2'));
@@ -53,7 +45,7 @@ export default async function ApiPage({
   return (
     <>
       <article className="doc-article api-article">
-        <Breadcrumbs slug={slug} />
+        <Breadcrumbs site={site} slug={slug} />
         <header className="doc-header">
           <h1>{frontmatter.title ?? op.summary}</h1>
           {(frontmatter.description || op.description) && (
@@ -152,7 +144,7 @@ export default async function ApiPage({
             </>
           )}
         </div>
-        <PageFooter slug={slug} pager={pager} feedback />
+        <PageFooter site={site} slug={slug} pager={pager} feedback />
       </article>
       <aside className="api-panel">
         <Playground

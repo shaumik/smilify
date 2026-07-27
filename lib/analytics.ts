@@ -11,7 +11,8 @@ export type EventType =
   | 'llms_txt'
   | 'llms_full'
   | 'raw_md'
-  | 'mcp';
+  | 'mcp'
+  | 'webhook_sync';
 
 export type AgentClass = 'human' | 'ai-agent' | 'script';
 

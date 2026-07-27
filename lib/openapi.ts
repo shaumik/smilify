@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { getConfig } from './config';
+import { contentRoot, siteVersion } from './sites';
 
 type Json = any;
 
@@ -33,15 +34,17 @@ export interface ApiOperation {
   server: string;
 }
 
-let cachedSpec: Json | null = null;
+const cachedSpecs = new Map<string, Json>();
 
-export function getSpec(): Json {
-  if (cachedSpec && process.env.NODE_ENV === 'production') return cachedSpec;
-  const rel = getConfig().api?.openapi ?? 'openapi/openapi.json';
-  const file = path.join(process.cwd(), rel);
+export function getSpec(site: string): Json {
+  const key = `${site}@${siteVersion(site)}`;
+  if (process.env.NODE_ENV === 'production' && cachedSpecs.has(key)) return cachedSpecs.get(key);
+  const rel = getConfig(site).api?.openapi ?? 'openapi/openapi.json';
+  const file = path.join(contentRoot(site), rel);
   const raw = fs.readFileSync(file, 'utf8');
-  cachedSpec = file.endsWith('.yaml') || file.endsWith('.yml') ? yaml.load(raw) : JSON.parse(raw);
-  return cachedSpec;
+  const spec = file.endsWith('.yaml') || file.endsWith('.yml') ? yaml.load(raw) : JSON.parse(raw);
+  cachedSpecs.set(key, spec);
+  return spec;
 }
 
 export function resolveRef(spec: Json, node: Json): Json {
@@ -92,8 +95,8 @@ export function exampleFromSchema(spec: Json, schema: Json, depth = 0): Json {
 }
 
 /** Look up an operation by "METHOD /path" (the frontmatter `openapi` field). */
-export function getOperation(ref: string): ApiOperation | null {
-  const spec = getSpec();
+export function getOperation(site: string, ref: string): ApiOperation | null {
+  const spec = getSpec(site);
   const m = /^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(\S+)$/i.exec(ref.trim());
   if (!m) return null;
   const method = m[1].toLowerCase();

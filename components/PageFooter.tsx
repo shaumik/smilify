@@ -4,20 +4,22 @@ import Feedback from './Feedback';
 import type { PagerLink } from '@/lib/content';
 
 export default function PageFooter({
+  site,
   slug,
   pager,
   feedback,
 }: {
+  site: string;
   slug: string;
   pager: { prev: PagerLink | null; next: PagerLink | null };
   feedback: boolean;
 }) {
   return (
     <footer className="page-footer">
-      {feedback && <Feedback slug={slug} />}
+      {feedback && <Feedback slug={`${site}/${slug}`} />}
       <div className="pager">
         {pager.prev ? (
-          <Link href={`/${pager.prev.slug}`} className="pager-link prev">
+          <Link href={`/${site}/${pager.prev.slug}`} className="pager-link prev">
             <Icon name="chevron-right" size={14} className="flip" />
             <div>
               <span>Previous</span>
@@ -28,7 +30,7 @@ export default function PageFooter({
           <span />
         )}
         {pager.next ? (
-          <Link href={`/${pager.next.slug}`} className="pager-link next">
+          <Link href={`/${site}/${pager.next.slug}`} className="pager-link next">
             <div>
               <span>Next</span>
               <strong>{pager.next.title}</strong>
