@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getStore, requireApiKey, Smile } from '../../lib';
+import { getStore, requireApiKey, Smile } from '../lib';
 
 const MOODS = ['joyful', 'grateful', 'proud', 'calm'] as const;
 

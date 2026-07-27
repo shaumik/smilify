@@ -17,13 +17,13 @@ Use `<Steps>` and `<Step>` for anything procedural:
 
 <Steps>
   <Step title="Generate an API key">
-    Ask in **#platform** for a Smilify API key. Demo environments use
-    `sk_demo_smilify_2026`.
+    Ask in **#platform** for a Smilify API key. Sandbox environments come
+    pre-provisioned with a workspace key.
   </Step>
   <Step title="Make your first request">
     ```bash
-    curl "https://docs.internal/api/demo/v1/smiles" \
-      -H "Authorization: Bearer sk_demo_smilify_2026"
+    curl "https://docs.internal/api/v1/smiles" \
+      -H "Authorization: Bearer $SMILIFY_API_KEY"
     ```
   </Step>
   <Step title="Verify the response">

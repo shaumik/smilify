@@ -26,7 +26,7 @@ export default function Playground({
   needsAuth: boolean;
 }) {
   const [open, setOpen] = useState(true);
-  const [apiKey, setApiKey] = useState('sk_demo_smilify_2026');
+  const [apiKey, setApiKey] = useState('sk_smilify_e7c31b9a4d21');
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(params.map((p) => [p.name, p.example ? String(p.example) : '']))
   );

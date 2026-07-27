@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireApiKey } from '../../lib';
+import { requireApiKey } from '../lib';
 
 const POSITIVE = ['great', 'love', 'happy', 'awesome', 'good', 'excellent', 'ship', 'win', 'thanks'];
 const NEGATIVE = ['bad', 'sad', 'hate', 'bug', 'broken', 'fail', 'angry', 'incident', 'down'];

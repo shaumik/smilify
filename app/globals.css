@@ -71,6 +71,28 @@ a:hover { text-decoration: underline; }
 .login-brand h1 { margin: 12px 0 4px; font-size: 22px; }
 .login-brand p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 
+.sso-flow { min-height: 40px; }
+.sso-loading {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.login-divider::before, .login-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
 .login-form { display: flex; flex-direction: column; gap: 14px; }
 .login-form label {
   display: flex; flex-direction: column; gap: 6px;
@@ -107,20 +129,6 @@ a:hover { text-decoration: underline; }
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 13px;
-}
-
-.login-demo-hint {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px dashed var(--border);
-  display: flex; flex-direction: column; gap: 6px;
-  font-size: 12px; color: var(--text-secondary);
-}
-.login-demo-hint code {
-  background: var(--code-bg);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11.5px;
 }
 
 /* ===== Shell layout ===== */

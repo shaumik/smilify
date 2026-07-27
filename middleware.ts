@@ -3,10 +3,15 @@ import { SESSION_COOKIE, verifySessionToken } from './lib/session';
 
 // Every route requires an authenticated session except:
 //  - the login page and login API
-//  - the demo Smilify API (it enforces its own bearer-token auth,
-//    mirroring a real external API for the playground demo)
+//  - the Smilify API (it enforces its own bearer-token auth,
+//    like any external product API)
 //  - Next.js internals and static assets
-const PUBLIC_PATHS = [/^\/login$/, /^\/api\/auth\/login$/, /^\/api\/demo(\/|$)/];
+const PUBLIC_PATHS = [
+  /^\/login$/,
+  /^\/api\/auth\/login$/,
+  /^\/api\/auth\/descope\/token$/,
+  /^\/api\/v1(\/|$)/,
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

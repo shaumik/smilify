@@ -13,22 +13,22 @@ export interface UserRecord {
   hash: string;
 }
 
-// Demo user directory. In production, swap for your identity provider
-// (SSO / OIDC) — see docs page platform/access-control.
+// User directory. Passwords are scrypt-hashed with per-user salts.
+// Swappable for the company IdP (SSO / OIDC) — see platform/access-control.
 export const USERS: UserRecord[] = [
   {
-    email: 'admin@smilify.dev',
-    name: 'Ada Admin',
+    email: 'shaumik@echelonai.com',
+    name: 'Shaumik',
     role: 'admin',
-    salt: 'cc3f3e12de222ae3823e8cadb578b866',
-    hash: '1c79831883a7e5833731e3d5f2e3382865ab782155f7dd25afaea33c7becd396b1d8a039adc9c7aa2d553ed8eeeba4813f25d64ac14d06d907d21eec6be50cbe',
+    salt: '192525d1be557764faf1292eb911bc6c',
+    hash: '375906c04d3e71e262cf63b7b693587ae9f21b7c73eeb1184c99689e098d75ecd3c120e591f51c20eb1bf4773dd4edaf18ba66927bb4e7975e9e21a991dd052d',
   },
   {
-    email: 'docs@smilify.dev',
-    name: 'Devon Docs',
+    email: 'guest@echelonai.com',
+    name: 'Guest',
     role: 'member',
-    salt: 'db2d772bfc7ca4c0a27849e4b94a2229',
-    hash: '866d4197dcaae379c99ad1cbda8e37f70472a417ba4191f14f0b6007feee1d72c18466384c6c09c59f38031c2be461492988dd94dbc560dd650949645d7755a6',
+    salt: '6a60301b67cfa78308786ce337fef7dd',
+    hash: '24d4ee4453c22eab20fa4200db6ed7e65ef2ccf8b84c4dec664ae5467c418ce8e7d98be732190bd7fd33cb4479edc27d2fdec1503fbfb82fa635f9cc5ddb4854',
   },
 ];
 

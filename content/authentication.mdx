@@ -9,11 +9,32 @@ Every route on this site — pages, search, the API playground proxy, even
 
 ## The flow
 
+Two sign-in methods are supported; both end in the exact same session, so
+everything downstream (middleware, roles, search) doesn't care which one a
+user came through.
+
+<Tabs>
+  <Tab title="Descope SSO">
+    With `DESCOPE_PROJECT_ID` set, the login page embeds our **Descope Flow**
+    (via the official `@descope/react-sdk`). The whole sign-in experience —
+    MFA, passkeys, magic links, social login — is configured in the Descope
+    console, with zero code changes here. After the flow succeeds, the server
+    validates Descope's session JWT against Descope's JWKS and mints the docs
+    session. Descope roles map to docs roles — anything in
+    `DESCOPE_ADMIN_ROLES` (default `admin, docs-admin`) becomes a docs admin;
+    everyone else is a member.
+  </Tab>
+  <Tab title="Local accounts">
+    Email + password against the directory in `lib/auth.ts`. Passwords are
+    verified against scrypt hashes with per-user salts and constant-time
+    comparison — plaintext passwords are never stored. Kept as a break-glass
+    path and for environments without Descope.
+  </Tab>
+</Tabs>
+
 <Steps>
   <Step title="Sign in">
-    Users authenticate with email + password at `/login`. Passwords are
-    verified against scrypt hashes with a per-user salt and constant-time
-    comparison — plaintext passwords are never stored.
+    Via Descope SSO or a local account, as above.
   </Step>
   <Step title="Session cookie">
     On success the server issues a JWT (HS256, signed with `SESSION_SECRET`)
@@ -35,12 +56,12 @@ Every route on this site — pages, search, the API playground proxy, even
 | Search API | `401` |
 | Feedback API | `401` |
 | `llms.txt` | `401` |
-| Demo Smilify API (`/api/demo/*`) | Own bearer-key auth, like a real external API |
+| Smilify API (`/api/v1/*`) | Own bearer-key auth, like any product API |
 
 <Info>
-  The demo Smilify API is deliberately outside the session wall so the API
-  playground behaves like calling a real service: it wants an
-  `Authorization: Bearer` key, not your docs cookie.
+  The Smilify API is deliberately outside the docs session wall — it
+  authenticates with an `Authorization: Bearer` key, not your docs cookie,
+  exactly as clients consume it in the wild.
 </Info>
 
 ## Roles
@@ -50,15 +71,27 @@ Two roles exist today:
 - **member** — sees all standard documentation.
 - **admin** — additionally sees groups marked `"access": "admin"` in
   `docs.json` (try the **Admin** section in the sidebar while signed in as an
-  admin, then sign in as `docs@smilify.dev` and watch it disappear).
+  admin, then sign in with a member account and watch it disappear).
 
 Role checks apply in three places: sidebar rendering, page access (non-listed
 roles get a 404, not a 403 — the page's existence isn't leaked), and search
 results.
 
-## Swapping in SSO
+## Configuring Descope
 
-The credential store is a single module (`lib/auth.ts`). To move to Okta,
-Google Workspace, or any OIDC provider, replace `verifyCredentials` with an
-OAuth callback that issues the same session token. Everything downstream —
-middleware, roles, search filtering — stays untouched.
+Set the environment variables (see `.env.example`):
+
+```bash title=".env"
+DESCOPE_PROJECT_ID=P2xxxxxxxxxxxx      # embeds the Descope flow on /login
+DESCOPE_FLOW_ID=sign-up-or-in          # which flow to show
+DESCOPE_ADMIN_ROLES=docs-admin         # Descope roles that grant docs admin
+```
+
+One-time console setup: add this deployment's origin to the Descope
+project's **approved domains** so the embedded flow may run.
+
+<Note>
+  Changing sign-in policy — enforcing MFA, adding passkeys, restricting to
+  the company domain — is done entirely in the Descope console. The docs
+  platform picks it up immediately because the flow is rendered by Descope.
+</Note>
